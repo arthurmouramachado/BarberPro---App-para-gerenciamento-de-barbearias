@@ -1,0 +1,132 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model agendamentos {
+  id          Int         @id @default(autoincrement())
+  cliente_id  Int
+  barbeiro_id Int
+  servico_id  Int
+  data        DateTime    @db.Date
+  hora_inicio DateTime    @db.Time(6)
+  hora_fim    DateTime    @db.Time(6)
+  status      String?     @default("Pendente") @db.VarChar(20)
+  criado_em   DateTime?   @default(now()) @db.Timestamp(6)
+  barbeiros   barbeiros   @relation(fields: [barbeiro_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_agend_barbeiro")
+  clientes    clientes    @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_agend_cliente")
+  servicos    servicos    @relation(fields: [servico_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_agend_servico")
+  avaliacao   avaliacao?
+  pagamentos  pagamentos?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model avaliacao {
+  id             Int          @id @default(autoincrement())
+  agendamento_id Int          @unique
+  nota           Int?
+  comentario     String?
+  criado_em      DateTime?    @default(now()) @db.Timestamp(6)
+  agendamentos   agendamentos @relation(fields: [agendamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_avaliacao_agendamento")
+}
+
+model barbearias {
+  id        Int         @id @default(autoincrement())
+  nome      String      @db.VarChar(100)
+  endereco  String?
+  telefone  String?     @db.VarChar(20)
+  foto_url  String?
+  criado_em DateTime?   @default(now()) @db.Timestamp(6)
+  barbeiros barbeiros[]
+  servicos  servicos[]
+}
+
+model barbeiros {
+  id                Int                 @id @default(autoincrement())
+  usuario_id        Int                 @unique
+  especialidade     String?             @db.VarChar(100)
+  bio               String?
+  ativo             Boolean?            @default(true)
+  barbearia_id      Int?
+  agendamentos      agendamentos[]
+  barbeiro_servicos barbeiro_servicos[]
+  barbearias        barbearias?         @relation(fields: [barbearia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_barbeiro_barbearia")
+  usuarios          usuarios            @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_barbeiro")
+  disponibilidade   disponibilidade[]
+}
+
+model clientes {
+  id              Int            @id @default(autoincrement())
+  usuario_id      Int            @unique
+  data_nascimento DateTime?      @db.Date
+  agendamentos    agendamentos[]
+  usuarios        usuarios       @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_usuario_cliente")
+}
+
+model disponibilidade {
+  id            Int       @id @default(autoincrement())
+  barbeiro_id   Int
+  dia_da_semana Int
+  hora_inicio   DateTime  @db.Time(6)
+  hora_fim      DateTime  @db.Time(6)
+  barbeiros     barbeiros @relation(fields: [barbeiro_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_disponibilidade_barbeiro")
+}
+
+model notificacao {
+  id         Int       @id @default(autoincrement())
+  usuario_id Int
+  mensagem   String
+  lida       Boolean?  @default(false)
+  criado_em  DateTime? @default(now()) @db.Timestamp(6)
+  usuarios   usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notificacao_usuario")
+}
+
+model pagamentos {
+  id             Int          @id @default(autoincrement())
+  agendamento_id Int          @unique
+  metodo         String       @db.VarChar(30)
+  valor          Decimal      @db.Decimal(10, 2)
+  status         String?      @default("Pendente") @db.VarChar(20)
+  id_transacao   String?      @db.VarChar(100)
+  pago_em        DateTime?    @db.Timestamp(6)
+  agendamentos   agendamentos @relation(fields: [agendamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pagamento_agendamento")
+}
+
+model servicos {
+  id                Int                 @id @default(autoincrement())
+  nome              String              @db.VarChar(100)
+  descricao         String?
+  preco             Decimal             @db.Decimal(10, 2)
+  duracao_minutos   Int
+  ativo             Boolean?            @default(true)
+  barbearia_id      Int?
+  agendamentos      agendamentos[]
+  barbeiro_servicos barbeiro_servicos[]
+  barbearias        barbearias?         @relation(fields: [barbearia_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_servico_barbearia")
+}
+
+model usuarios {
+  id          Int           @id @default(autoincrement())
+  nome        String        @db.VarChar(100)
+  email       String        @unique @db.VarChar(100)
+  senha       String        @db.VarChar(255)
+  funcao      String        @db.VarChar(20)
+  telefone    String?       @db.VarChar(20)
+  criado_em   DateTime?     @default(now()) @db.Timestamp(6)
+  barbeiros   barbeiros?
+  clientes    clientes?
+  notificacao notificacao[]
+}
+
+model barbeiro_servicos {
+  idbarbeiro_servicos   Int       @id @default(autoincrement())
+  servicos_idservicos   Int
+  barbeiros_idbarbeiros Int
+  barbeiros             barbeiros @relation(fields: [barbeiros_idbarbeiros], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_barbeiro")
+  servicos              servicos  @relation(fields: [servicos_idservicos], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_servicos")
+}
