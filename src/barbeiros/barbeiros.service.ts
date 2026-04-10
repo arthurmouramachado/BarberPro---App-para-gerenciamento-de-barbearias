@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { CreateBarbeiroDto } from './dto/create-barbeiro.dto';
 import { UpdateBarbeiroDto } from './dto/update-barbeiro.dto';
 import { PrismaService } from 'src/database/prisma.service';
-
 @Injectable()
 export class BarbeirosService {
   constructor(private prisma: PrismaService) {}
