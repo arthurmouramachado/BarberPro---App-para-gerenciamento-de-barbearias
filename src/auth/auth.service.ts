@@ -5,13 +5,19 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
-import { User } from 'src/user/entities/user.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService,
+  ) {}
 
-  async signIn(email: string, senha: string): Promise<Omit<User, 'senha'>> {
+  async signIn(
+    email: string,
+    senha: string,
+  ): Promise<{ access_token: string }> {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new NotFoundException('User not found');
@@ -21,9 +27,12 @@ export class AuthService {
     if (!passwordMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { senha: _, ...result } = user;
+    const payload = {
+      sub: user.id,
+      nome: user.nome,
+      funcao: user.funcao,
+    };
 
-    return result;
+    return { access_token: await this.jwtService.signAsync(payload) };
   }
 }
