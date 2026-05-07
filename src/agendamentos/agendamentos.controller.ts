@@ -15,7 +15,7 @@ import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 export class AgendamentosController {
   constructor(private readonly agendamentosService: AgendamentosService) {}
 
-  @Post()
+  @Post('marcar')
   create(@Body() createAgendamentoDto: CreateAgendamentoDto) {
     return this.agendamentosService.create(createAgendamentoDto);
   }

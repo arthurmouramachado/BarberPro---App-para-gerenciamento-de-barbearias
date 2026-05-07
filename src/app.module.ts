@@ -16,6 +16,7 @@ import { ClientesService } from './clientes/clientes.service';
 import { UserService } from './user/user.service';
 import { UserController } from './user/user.controller';
 import { ClientesController } from './clientes/clientes.controller';
+import { BarbeirosController } from './barbeiros/barbeiros.controller';
 @Module({
   imports: [
     ClientesModule,
@@ -34,7 +35,7 @@ import { ClientesController } from './clientes/clientes.controller';
     }),
     AuthModule,
   ],
-  controllers: [UserController, ClientesController],
+  controllers: [UserController, ClientesController, BarbeirosController],
   providers: [UserService, ClientesService],
 })
 export class AppModule {}
