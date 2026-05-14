@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { AvaliacoesService } from './avaliacoes.service';
-import { AvaliacoesController } from './avaliacoes.controller';
+import { AvaliacoesService } from './avaliacao.service';
+import { AvaliacoesController } from './avaliacao.controller';
 import { DatabaseModule } from 'src/database/database.module';
 
 @Module({
