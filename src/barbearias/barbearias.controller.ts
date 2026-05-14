@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { BarbeariasService } from './barbearias.service';
 import { CreateBarbeariaDto } from './dto/create-barbearia.dto';
 import { UpdateBarbeariaDto } from './dto/update-barbearia.dto';
@@ -7,7 +15,7 @@ import { UpdateBarbeariaDto } from './dto/update-barbearia.dto';
 export class BarbeariasController {
   constructor(private readonly barbeariasService: BarbeariasService) {}
 
-  @Post()
+  @Post('criar')
   create(@Body() createBarbeariaDto: CreateBarbeariaDto) {
     return this.barbeariasService.create(createBarbeariaDto);
   }
@@ -23,7 +31,10 @@ export class BarbeariasController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBarbeariaDto: UpdateBarbeariaDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateBarbeariaDto: UpdateBarbeariaDto,
+  ) {
     return this.barbeariasService.update(+id, updateBarbeariaDto);
   }
 

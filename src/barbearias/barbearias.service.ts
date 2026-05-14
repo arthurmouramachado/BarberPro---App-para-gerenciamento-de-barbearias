@@ -1,26 +1,59 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBarbeariaDto } from './dto/create-barbearia.dto';
 import { UpdateBarbeariaDto } from './dto/update-barbearia.dto';
+import { PrismaService } from 'src/database/prisma.service';
 
 @Injectable()
 export class BarbeariasService {
-  create(createBarbeariaDto: CreateBarbeariaDto) {
-    return 'This action adds a new barbearia';
+  constructor(private prisma: PrismaService) {}
+  async create(createBarbeariaDto: CreateBarbeariaDto) {
+    const { nome, endereco, telefone, foto_url } = createBarbeariaDto;
+
+    return await this.prisma.barbearias.create({
+      data: {
+        nome,
+        endereco,
+        telefone,
+        foto_url,
+      },
+    });
   }
 
   findAll() {
-    return `This action returns all barbearias`;
+    return this.prisma.barbearias.findMany({
+      include: {
+        barbeiros: true,
+        servicos: true,
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} barbearia`;
+  async findOne(id: number) {
+    const barbearia = await this.prisma.barbearias.findUnique({
+      where: { id },
+      include: {
+        barbeiros: true,
+        servicos: true,
+      },
+    });
+
+    if (!barbearia) throw new NotFoundException('Barbearia não encontrada');
+
+    return barbearia;
   }
 
-  update(id: number, updateBarbeariaDto: UpdateBarbeariaDto) {
-    return `This action updates a #${id} barbearia`;
+  async update(id: number, updateBarbeariaDto: UpdateBarbeariaDto) {
+    await this.findOne(id);
+    return this.prisma.barbearias.update({
+      where: { id },
+      data: updateBarbeariaDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} barbearia`;
+  async remove(id: number) {
+    await this.findOne(id);
+    return this.prisma.barbearias.delete({
+      where: { id },
+    });
   }
 }

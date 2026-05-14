@@ -1,26 +1,68 @@
 import { Injectable } from '@nestjs/common';
 import { CreateAvaliacoeDto } from './dto/create-avaliacoe.dto';
 import { UpdateAvaliacoeDto } from './dto/update-avaliacoe.dto';
+import { PrismaService } from '../database/prisma.service';
 
 @Injectable()
 export class AvaliacoesService {
-  create(createAvaliacoeDto: CreateAvaliacoeDto) {
-    return 'This action adds a new avaliacoe';
+  constructor(private prisma: PrismaService) {}
+  async create(createAvaliacoeDto: CreateAvaliacoeDto) {
+    const { agendamento_id, nota, comentario } = createAvaliacoeDto;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return await this.prisma.avaliacoes.create({
+      data: {
+        agendamento_id,
+        nota,
+        comentario,
+      },
+    });
   }
 
   findAll() {
-    return `This action returns all avaliacoes`;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return this.prisma.avaliacoes.findMany({
+      include: {
+        agendamentos: {
+          include: {
+            clientes: true,
+            barbeiros: true,
+            servicos: true,
+          },
+        },
+      },
+    });
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} avaliacoe`;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return this.prisma.avaliacoes.findUnique({
+      where: { id },
+      include: {
+        agendamentos: {
+          include: {
+            clientes: true,
+            barbeiros: true,
+            servicos: true,
+          },
+        },
+      },
+    });
   }
 
-  update(id: number, updateAvaliacoeDto: UpdateAvaliacoeDto) {
-    return `This action updates a #${id} avaliacoe`;
+  async update(id: number, updateAvaliacoeDto: UpdateAvaliacoeDto) {
+    await this.findOne(id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return this.prisma.avaliacoes.update({
+      where: { id },
+      data: updateAvaliacoeDto,
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} avaliacoe`;
+  async remove(id: number) {
+    await this.findOne(id);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    return this.prisma.avaliacoes.delete({
+      where: { id },
+    });
   }
 }

@@ -23,4 +23,8 @@ export class CreateServicoDto {
   @IsOptional()
   @IsBoolean()
   ativo?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  barbearia_id?: number;
 }
