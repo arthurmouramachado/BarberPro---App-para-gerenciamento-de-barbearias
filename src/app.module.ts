@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ClientesModule } from './clientes/clientes.module';
 import { DatabaseModule } from './database/database.module';
 import { DisponibilidadeModule } from './disponibilidade/disponibilidade.module';
-import { AvaliacoesModule } from './avaliacoes/avaliacao.module';
+import { AvaliacaoModule } from './avaliacoes/avaliacao.module';
 import { NotificacoesModule } from './notificacoes/notificacoes.module';
 import { PagamentosModule } from './pagamentos/pagamentos.module';
 import { AgendamentosModule } from './agendamentos/agendamentos.module';
@@ -27,7 +27,7 @@ import { BarbeirosController } from './barbeiros/barbeiros.controller';
     AgendamentosModule,
     PagamentosModule,
     NotificacoesModule,
-    AvaliacoesModule,
+    AvaliacaoModule,
     DisponibilidadeModule,
     DatabaseModule,
     ConfigModule.forRoot({
