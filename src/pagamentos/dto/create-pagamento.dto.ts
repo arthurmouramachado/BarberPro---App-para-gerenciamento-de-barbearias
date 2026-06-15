@@ -6,7 +6,7 @@ export class CreatePagamentoDto {
   metodo!: string;
   @IsNumber()
   valor!: number;
-  @IsString() // ➔ ADICIONE ESTA LINHA
+  @IsString()
   cpf!: string;
   @IsString()
   @IsOptional()
