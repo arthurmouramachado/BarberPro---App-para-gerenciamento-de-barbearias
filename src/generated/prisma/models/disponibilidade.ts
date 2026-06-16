@@ -560,6 +560,7 @@ export type disponibilidadeCountArgs<ExtArgs extends runtime.Types.Extensions.In
   }
 
 export interface disponibilidadeDelegate<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+  findOne(id: number): unknown
   [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['disponibilidade'], meta: { name: 'disponibilidade' } }
   /**
    * Find zero or one Disponibilidade that matches the filter.

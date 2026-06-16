@@ -1,15 +1,37 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { DisponibilidadeService } from './disponibilidade.service';
 import { CreateDisponibilidadeDto } from './dto/create-disponibilidade.dto';
 import { UpdateDisponibilidadeDto } from './dto/update-disponibilidade.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller('disponibilidade')
 export class DisponibilidadeController {
-  constructor(private readonly disponibilidadeService: DisponibilidadeService) {}
+  constructor(
+    private readonly disponibilidadeService: DisponibilidadeService,
+  ) {}
 
-  @Post()
-  create(@Body() createDisponibilidadeDto: CreateDisponibilidadeDto) {
-    return this.disponibilidadeService.create(createDisponibilidadeDto);
+  @Post('cadastrar')
+  @UseGuards(AuthGuard)
+  create(
+    @Req() req,
+    @Body() createDisponibilidadeDto: CreateDisponibilidadeDto,
+  ) {
+    return this.disponibilidadeService.create(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      req.userId.sub,
+      createDisponibilidadeDto,
+    );
   }
 
   @Get()
@@ -23,12 +45,24 @@ export class DisponibilidadeController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto) {
-    return this.disponibilidadeService.update(+id, updateDisponibilidadeDto);
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Req() req,
+    @Body() updateDisponibilidadeDto: UpdateDisponibilidadeDto,
+  ) {
+    return this.disponibilidadeService.update(
+      +id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      req.userId.sub,
+      updateDisponibilidadeDto,
+    );
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.disponibilidadeService.remove(+id);
+  @UseGuards(AuthGuard)
+  remove(@Param('id') id: string, @Req() req) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return this.disponibilidadeService.remove(+id, req.userId.sub);
   }
 }

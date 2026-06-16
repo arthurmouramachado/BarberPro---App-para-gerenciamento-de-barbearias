@@ -1,8 +1,14 @@
-//import { IsInt, IsDateString, IsString } from 'class-validator';
+import { IsInt, IsString, Min, Max } from 'class-validator';
 
 export class CreateDisponibilidadeDto {
-  barbeiro_id!: number;
-  dia_da_semana!: string;
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  dia_da_semana!: number;
+
+  @IsString()
   hora_inicio!: string;
+
+  @IsString()
   hora_fim!: string;
 }
