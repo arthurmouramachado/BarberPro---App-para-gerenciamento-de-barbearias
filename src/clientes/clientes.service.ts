@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable } from '@nestjs/common';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
@@ -8,9 +7,7 @@ import { PrismaService } from 'src/database/prisma.service';
 export class ClientesService {
   constructor(private prisma: PrismaService) {}
 
-  // eslint-disable-next-line @typescript-eslint/require-await
   async create(usuario_id: number, createClienteDto: CreateClienteDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return this.prisma.clientes.create({
       data: {
         usuario_id,
@@ -22,7 +19,6 @@ export class ClientesService {
   }
 
   findAll() {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return this.prisma.clientes.findMany({
       include: {
         usuarios: true,
@@ -31,7 +27,6 @@ export class ClientesService {
     });
   }
   findOne(id: number) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     return this.prisma.clientes.findUnique({
       where: { id },
       include: {

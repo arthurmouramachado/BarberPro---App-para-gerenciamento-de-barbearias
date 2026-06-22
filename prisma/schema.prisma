@@ -111,16 +111,19 @@ model servicos {
 }
 
 model usuarios {
-  id          Int           @id @default(autoincrement())
-  nome        String        @db.VarChar(100)
-  email       String        @unique @db.VarChar(100)
-  senha       String        @db.VarChar(255)
-  funcao      String        @db.VarChar(20)
-  telefone    String?       @db.VarChar(20)
-  criado_em   DateTime?     @default(now()) @db.Timestamp(6)
-  barbeiros   barbeiros?
-  clientes    clientes?
-  notificacao notificacao[]
+  id                   Int           @id @default(autoincrement())
+  nome                 String        @db.VarChar(100)
+  email                String        @unique @db.VarChar(100)
+  senha                String        @db.VarChar(255)
+  funcao               String        @db.VarChar(20)
+  telefone             String?       @db.VarChar(20)
+  criado_em            DateTime?     @default(now()) @db.Timestamp(6)
+  google_access_token  String?
+  google_refresh_token String?
+  google_token_expiry  DateTime?     @db.Timestamp(6)
+  barbeiros            barbeiros?
+  clientes             clientes?
+  notificacao          notificacao[]
 }
 
 model barbeiro_servicos {

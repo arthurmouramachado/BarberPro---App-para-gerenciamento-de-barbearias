@@ -1381,7 +1381,10 @@ export const UsuariosScalarFieldEnum = {
   senha: 'senha',
   funcao: 'funcao',
   telefone: 'telefone',
-  criado_em: 'criado_em'
+  criado_em: 'criado_em',
+  google_access_token: 'google_access_token',
+  google_refresh_token: 'google_refresh_token',
+  google_token_expiry: 'google_token_expiry'
 } as const
 
 export type UsuariosScalarFieldEnum = (typeof UsuariosScalarFieldEnum)[keyof typeof UsuariosScalarFieldEnum]

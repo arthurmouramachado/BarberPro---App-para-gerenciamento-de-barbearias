@@ -42,6 +42,9 @@ export type UsuariosMinAggregateOutputType = {
   funcao: string | null
   telefone: string | null
   criado_em: Date | null
+  google_access_token: string | null
+  google_refresh_token: string | null
+  google_token_expiry: Date | null
 }
 
 export type UsuariosMaxAggregateOutputType = {
@@ -52,6 +55,9 @@ export type UsuariosMaxAggregateOutputType = {
   funcao: string | null
   telefone: string | null
   criado_em: Date | null
+  google_access_token: string | null
+  google_refresh_token: string | null
+  google_token_expiry: Date | null
 }
 
 export type UsuariosCountAggregateOutputType = {
@@ -62,6 +68,9 @@ export type UsuariosCountAggregateOutputType = {
   funcao: number
   telefone: number
   criado_em: number
+  google_access_token: number
+  google_refresh_token: number
+  google_token_expiry: number
   _all: number
 }
 
@@ -82,6 +91,9 @@ export type UsuariosMinAggregateInputType = {
   funcao?: true
   telefone?: true
   criado_em?: true
+  google_access_token?: true
+  google_refresh_token?: true
+  google_token_expiry?: true
 }
 
 export type UsuariosMaxAggregateInputType = {
@@ -92,6 +104,9 @@ export type UsuariosMaxAggregateInputType = {
   funcao?: true
   telefone?: true
   criado_em?: true
+  google_access_token?: true
+  google_refresh_token?: true
+  google_token_expiry?: true
 }
 
 export type UsuariosCountAggregateInputType = {
@@ -102,6 +117,9 @@ export type UsuariosCountAggregateInputType = {
   funcao?: true
   telefone?: true
   criado_em?: true
+  google_access_token?: true
+  google_refresh_token?: true
+  google_token_expiry?: true
   _all?: true
 }
 
@@ -199,6 +217,9 @@ export type UsuariosGroupByOutputType = {
   funcao: string
   telefone: string | null
   criado_em: Date | null
+  google_access_token: string | null
+  google_refresh_token: string | null
+  google_token_expiry: Date | null
   _count: UsuariosCountAggregateOutputType | null
   _avg: UsuariosAvgAggregateOutputType | null
   _sum: UsuariosSumAggregateOutputType | null
@@ -232,6 +253,9 @@ export type usuariosWhereInput = {
   funcao?: Prisma.StringFilter<"usuarios"> | string
   telefone?: Prisma.StringNullableFilter<"usuarios"> | string | null
   criado_em?: Prisma.DateTimeNullableFilter<"usuarios"> | Date | string | null
+  google_access_token?: Prisma.StringNullableFilter<"usuarios"> | string | null
+  google_refresh_token?: Prisma.StringNullableFilter<"usuarios"> | string | null
+  google_token_expiry?: Prisma.DateTimeNullableFilter<"usuarios"> | Date | string | null
   barbeiros?: Prisma.XOR<Prisma.BarbeirosNullableScalarRelationFilter, Prisma.barbeirosWhereInput> | null
   clientes?: Prisma.XOR<Prisma.ClientesNullableScalarRelationFilter, Prisma.clientesWhereInput> | null
   notificacao?: Prisma.NotificacaoListRelationFilter
@@ -245,6 +269,9 @@ export type usuariosOrderByWithRelationInput = {
   funcao?: Prisma.SortOrder
   telefone?: Prisma.SortOrderInput | Prisma.SortOrder
   criado_em?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_access_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_refresh_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_token_expiry?: Prisma.SortOrderInput | Prisma.SortOrder
   barbeiros?: Prisma.barbeirosOrderByWithRelationInput
   clientes?: Prisma.clientesOrderByWithRelationInput
   notificacao?: Prisma.notificacaoOrderByRelationAggregateInput
@@ -261,6 +288,9 @@ export type usuariosWhereUniqueInput = Prisma.AtLeast<{
   funcao?: Prisma.StringFilter<"usuarios"> | string
   telefone?: Prisma.StringNullableFilter<"usuarios"> | string | null
   criado_em?: Prisma.DateTimeNullableFilter<"usuarios"> | Date | string | null
+  google_access_token?: Prisma.StringNullableFilter<"usuarios"> | string | null
+  google_refresh_token?: Prisma.StringNullableFilter<"usuarios"> | string | null
+  google_token_expiry?: Prisma.DateTimeNullableFilter<"usuarios"> | Date | string | null
   barbeiros?: Prisma.XOR<Prisma.BarbeirosNullableScalarRelationFilter, Prisma.barbeirosWhereInput> | null
   clientes?: Prisma.XOR<Prisma.ClientesNullableScalarRelationFilter, Prisma.clientesWhereInput> | null
   notificacao?: Prisma.NotificacaoListRelationFilter
@@ -274,6 +304,9 @@ export type usuariosOrderByWithAggregationInput = {
   funcao?: Prisma.SortOrder
   telefone?: Prisma.SortOrderInput | Prisma.SortOrder
   criado_em?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_access_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_refresh_token?: Prisma.SortOrderInput | Prisma.SortOrder
+  google_token_expiry?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.usuariosCountOrderByAggregateInput
   _avg?: Prisma.usuariosAvgOrderByAggregateInput
   _max?: Prisma.usuariosMaxOrderByAggregateInput
@@ -292,6 +325,9 @@ export type usuariosScalarWhereWithAggregatesInput = {
   funcao?: Prisma.StringWithAggregatesFilter<"usuarios"> | string
   telefone?: Prisma.StringNullableWithAggregatesFilter<"usuarios"> | string | null
   criado_em?: Prisma.DateTimeNullableWithAggregatesFilter<"usuarios"> | Date | string | null
+  google_access_token?: Prisma.StringNullableWithAggregatesFilter<"usuarios"> | string | null
+  google_refresh_token?: Prisma.StringNullableWithAggregatesFilter<"usuarios"> | string | null
+  google_token_expiry?: Prisma.DateTimeNullableWithAggregatesFilter<"usuarios"> | Date | string | null
 }
 
 export type usuariosCreateInput = {
@@ -301,6 +337,9 @@ export type usuariosCreateInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosCreateNestedOneWithoutUsuariosInput
   clientes?: Prisma.clientesCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoCreateNestedManyWithoutUsuariosInput
@@ -314,6 +353,9 @@ export type usuariosUncheckedCreateInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedCreateNestedOneWithoutUsuariosInput
   clientes?: Prisma.clientesUncheckedCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoUncheckedCreateNestedManyWithoutUsuariosInput
@@ -326,6 +368,9 @@ export type usuariosUpdateInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUpdateOneWithoutUsuariosNestedInput
   clientes?: Prisma.clientesUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUpdateManyWithoutUsuariosNestedInput
@@ -339,6 +384,9 @@ export type usuariosUncheckedUpdateInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedUpdateOneWithoutUsuariosNestedInput
   clientes?: Prisma.clientesUncheckedUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUncheckedUpdateManyWithoutUsuariosNestedInput
@@ -352,6 +400,9 @@ export type usuariosCreateManyInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
 }
 
 export type usuariosUpdateManyMutationInput = {
@@ -361,6 +412,9 @@ export type usuariosUpdateManyMutationInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type usuariosUncheckedUpdateManyInput = {
@@ -371,6 +425,9 @@ export type usuariosUncheckedUpdateManyInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type UsuariosScalarRelationFilter = {
@@ -386,6 +443,9 @@ export type usuariosCountOrderByAggregateInput = {
   funcao?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
+  google_access_token?: Prisma.SortOrder
+  google_refresh_token?: Prisma.SortOrder
+  google_token_expiry?: Prisma.SortOrder
 }
 
 export type usuariosAvgOrderByAggregateInput = {
@@ -400,6 +460,9 @@ export type usuariosMaxOrderByAggregateInput = {
   funcao?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
+  google_access_token?: Prisma.SortOrder
+  google_refresh_token?: Prisma.SortOrder
+  google_token_expiry?: Prisma.SortOrder
 }
 
 export type usuariosMinOrderByAggregateInput = {
@@ -410,6 +473,9 @@ export type usuariosMinOrderByAggregateInput = {
   funcao?: Prisma.SortOrder
   telefone?: Prisma.SortOrder
   criado_em?: Prisma.SortOrder
+  google_access_token?: Prisma.SortOrder
+  google_refresh_token?: Prisma.SortOrder
+  google_token_expiry?: Prisma.SortOrder
 }
 
 export type usuariosSumOrderByAggregateInput = {
@@ -465,6 +531,9 @@ export type usuariosCreateWithoutBarbeirosInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   clientes?: Prisma.clientesCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoCreateNestedManyWithoutUsuariosInput
 }
@@ -477,6 +546,9 @@ export type usuariosUncheckedCreateWithoutBarbeirosInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   clientes?: Prisma.clientesUncheckedCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoUncheckedCreateNestedManyWithoutUsuariosInput
 }
@@ -504,6 +576,9 @@ export type usuariosUpdateWithoutBarbeirosInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   clientes?: Prisma.clientesUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUpdateManyWithoutUsuariosNestedInput
 }
@@ -516,6 +591,9 @@ export type usuariosUncheckedUpdateWithoutBarbeirosInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   clientes?: Prisma.clientesUncheckedUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUncheckedUpdateManyWithoutUsuariosNestedInput
 }
@@ -527,6 +605,9 @@ export type usuariosCreateWithoutClientesInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoCreateNestedManyWithoutUsuariosInput
 }
@@ -539,6 +620,9 @@ export type usuariosUncheckedCreateWithoutClientesInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedCreateNestedOneWithoutUsuariosInput
   notificacao?: Prisma.notificacaoUncheckedCreateNestedManyWithoutUsuariosInput
 }
@@ -566,6 +650,9 @@ export type usuariosUpdateWithoutClientesInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUpdateManyWithoutUsuariosNestedInput
 }
@@ -578,6 +665,9 @@ export type usuariosUncheckedUpdateWithoutClientesInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedUpdateOneWithoutUsuariosNestedInput
   notificacao?: Prisma.notificacaoUncheckedUpdateManyWithoutUsuariosNestedInput
 }
@@ -589,6 +679,9 @@ export type usuariosCreateWithoutNotificacaoInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosCreateNestedOneWithoutUsuariosInput
   clientes?: Prisma.clientesCreateNestedOneWithoutUsuariosInput
 }
@@ -601,6 +694,9 @@ export type usuariosUncheckedCreateWithoutNotificacaoInput = {
   funcao: string
   telefone?: string | null
   criado_em?: Date | string | null
+  google_access_token?: string | null
+  google_refresh_token?: string | null
+  google_token_expiry?: Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedCreateNestedOneWithoutUsuariosInput
   clientes?: Prisma.clientesUncheckedCreateNestedOneWithoutUsuariosInput
 }
@@ -628,6 +724,9 @@ export type usuariosUpdateWithoutNotificacaoInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUpdateOneWithoutUsuariosNestedInput
   clientes?: Prisma.clientesUpdateOneWithoutUsuariosNestedInput
 }
@@ -640,6 +739,9 @@ export type usuariosUncheckedUpdateWithoutNotificacaoInput = {
   funcao?: Prisma.StringFieldUpdateOperationsInput | string
   telefone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   criado_em?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  google_access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  google_token_expiry?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   barbeiros?: Prisma.barbeirosUncheckedUpdateOneWithoutUsuariosNestedInput
   clientes?: Prisma.clientesUncheckedUpdateOneWithoutUsuariosNestedInput
 }
@@ -683,6 +785,9 @@ export type usuariosSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   funcao?: boolean
   telefone?: boolean
   criado_em?: boolean
+  google_access_token?: boolean
+  google_refresh_token?: boolean
+  google_token_expiry?: boolean
   barbeiros?: boolean | Prisma.usuarios$barbeirosArgs<ExtArgs>
   clientes?: boolean | Prisma.usuarios$clientesArgs<ExtArgs>
   notificacao?: boolean | Prisma.usuarios$notificacaoArgs<ExtArgs>
@@ -697,6 +802,9 @@ export type usuariosSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   funcao?: boolean
   telefone?: boolean
   criado_em?: boolean
+  google_access_token?: boolean
+  google_refresh_token?: boolean
+  google_token_expiry?: boolean
 }, ExtArgs["result"]["usuarios"]>
 
 export type usuariosSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -707,6 +815,9 @@ export type usuariosSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   funcao?: boolean
   telefone?: boolean
   criado_em?: boolean
+  google_access_token?: boolean
+  google_refresh_token?: boolean
+  google_token_expiry?: boolean
 }, ExtArgs["result"]["usuarios"]>
 
 export type usuariosSelectScalar = {
@@ -717,9 +828,12 @@ export type usuariosSelectScalar = {
   funcao?: boolean
   telefone?: boolean
   criado_em?: boolean
+  google_access_token?: boolean
+  google_refresh_token?: boolean
+  google_token_expiry?: boolean
 }
 
-export type usuariosOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "email" | "senha" | "funcao" | "telefone" | "criado_em", ExtArgs["result"]["usuarios"]>
+export type usuariosOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "nome" | "email" | "senha" | "funcao" | "telefone" | "criado_em" | "google_access_token" | "google_refresh_token" | "google_token_expiry", ExtArgs["result"]["usuarios"]>
 export type usuariosInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   barbeiros?: boolean | Prisma.usuarios$barbeirosArgs<ExtArgs>
   clientes?: boolean | Prisma.usuarios$clientesArgs<ExtArgs>
@@ -744,6 +858,9 @@ export type $usuariosPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     funcao: string
     telefone: string | null
     criado_em: Date | null
+    google_access_token: string | null
+    google_refresh_token: string | null
+    google_token_expiry: Date | null
   }, ExtArgs["result"]["usuarios"]>
   composites: {}
 }
@@ -1177,6 +1294,9 @@ export interface usuariosFieldRefs {
   readonly funcao: Prisma.FieldRef<"usuarios", 'String'>
   readonly telefone: Prisma.FieldRef<"usuarios", 'String'>
   readonly criado_em: Prisma.FieldRef<"usuarios", 'DateTime'>
+  readonly google_access_token: Prisma.FieldRef<"usuarios", 'String'>
+  readonly google_refresh_token: Prisma.FieldRef<"usuarios", 'String'>
+  readonly google_token_expiry: Prisma.FieldRef<"usuarios", 'DateTime'>
 }
     
 

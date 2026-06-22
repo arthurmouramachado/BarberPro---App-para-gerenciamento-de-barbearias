@@ -1,4 +1,4 @@
-import { IsInt, IsDateString, IsString } from 'class-validator';
+import { IsInt, IsDateString, IsString, IsOptional } from 'class-validator';
 
 export class CreateAgendamentoDto {
   @IsInt()
@@ -19,6 +19,7 @@ export class CreateAgendamentoDto {
   @IsString()
   hora_fim!: string; // ex: "10:00:00"
 
+  @IsOptional()
   @IsString()
   status?: string; // se não vier, o Prisma usa "Pendente"
 }

@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
 import { UpdateAgendamentoDto } from './dto/update-agendamento.dto';
 import { PrismaService } from 'src/database/prisma.service';
 import { ClientesService } from 'src/clientes/clientes.service';
 import { BarbeirosService } from 'src/barbeiros/barbeiros.service';
 import { ServicosService } from 'src/servicos/servicos.service';
+import { NotificacoesService } from 'src/notificacoes/notificacoes.service';
+import { GoogleCalendarService } from 'src/notificacoes/google-calendar.service';
 
 @Injectable()
 export class AgendamentosService {
@@ -13,6 +19,8 @@ export class AgendamentosService {
     private barbeirosService: BarbeirosService,
     private clientesService: ClientesService,
     private servicosService: ServicosService,
+    private notificacoesService: NotificacoesService,
+    private googleCalendarService: GoogleCalendarService,
   ) {}
   async create(createAgendamentoDto: CreateAgendamentoDto) {
     const {
@@ -33,17 +41,65 @@ export class AgendamentosService {
     if (!barbeiro) throw new NotFoundException('Barbeiro não encontrado');
     if (!servico) throw new NotFoundException('Serviço não encontrado');
 
-    return await this.prisma.agendamentos.create({
+    const diaDaSemana = new Date(data).getDay();
+
+    const disponibilidade = await this.prisma.disponibilidade.findFirst({
+      where: {
+        barbeiro_id,
+        dia_da_semana: diaDaSemana,
+      },
+    });
+
+    if (!disponibilidade) {
+      throw new BadRequestException('Barbeiro não atende nesse dia');
+    }
+
+    const horaInicioAgendamento = new Date(`1970-01-01T${hora_inicio}Z`);
+    const horaFimAgendamento = new Date(`1970-01-01T${hora_fim}Z`);
+
+    if (
+      horaInicioAgendamento < disponibilidade.hora_inicio ||
+      horaFimAgendamento > disponibilidade.hora_fim
+    ) {
+      throw new BadRequestException(
+        'Horário fora da disponibilidade do barbeiro',
+      );
+    }
+
+    const agendamento = await this.prisma.agendamentos.create({
       data: {
         cliente_id,
         barbeiro_id,
         servico_id,
         data: new Date(data),
-        hora_inicio: new Date(`1970-01-01T${hora_inicio}Z`), // Convertendo para Date
-        hora_fim: new Date(`1970-01-01T${hora_fim}Z`), // Convertendo para Date
+        hora_inicio: horaInicioAgendamento,
+        hora_fim: horaFimAgendamento,
         status,
       },
     });
+
+    await this.notificacoesService.create(cliente.usuario_id, {
+      mensagem: `Agendamento confirmado para ${data}`,
+    });
+
+    await this.notificacoesService.create(barbeiro.usuario_id, {
+      mensagem: `Novo agendamento com ${cliente.usuarios.nome}`,
+    });
+
+    await this.googleCalendarService.criarEventoAgenda({
+      barbeiroEmail: barbeiro.usuarios.email,
+      clienteEmail: cliente.usuarios.email,
+      servicoNome: servico.nome,
+      servicoDescricao: servico.descricao ?? undefined,
+      servicoPreco: Number(servico.preco),
+      data,
+      horaInicio: hora_inicio,
+      horaFim: hora_fim,
+      barbeiroNome: barbeiro.usuarios.nome,
+      clienteNome: cliente.usuarios.nome,
+    });
+
+    return agendamento;
   }
 
   findAll() {

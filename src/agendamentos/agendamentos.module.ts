@@ -6,9 +6,10 @@ import { ClientesService } from 'src/clientes/clientes.service';
 import { ServicosService } from 'src/servicos/servicos.service';
 import { BarbeariasService } from 'src/barbearias/barbearias.service';
 import { BarbeirosService } from 'src/barbeiros/barbeiros.service';
+import { NotificacoesModule } from 'src/notificacoes/notificacoes.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, NotificacoesModule],
   controllers: [AgendamentosController],
   providers: [
     AgendamentosService,
