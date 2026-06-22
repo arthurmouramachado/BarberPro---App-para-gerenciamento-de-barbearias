@@ -39,10 +39,6 @@ export class GoogleCalendarService {
         dateTime: `${dados.data}T${dados.horaFim}`,
         timeZone: 'America/Sao_Paulo',
       },
-      attendees: [
-        { email: dados.barbeiroEmail },
-        { email: dados.clienteEmail },
-      ],
       reminders: {
         useDefault: false,
         overrides: [
@@ -55,7 +51,6 @@ export class GoogleCalendarService {
     const response = await this.calendar.events.insert({
       calendarId: 'primary',
       requestBody: evento,
-      sendUpdates: 'all',
     });
 
     return response.data;
