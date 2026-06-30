@@ -86,6 +86,20 @@ export class AgendamentosService {
       mensagem: `Novo agendamento com ${cliente.usuarios.nome}`,
     });
 
+    const admins = await this.prisma.usuarios.findMany({
+      where: { funcao: 'ADMIN' },
+    });
+
+    await this.notificacoesService.create(admins[0].id, {
+      mensagem: `Novo agendamento: ${cliente.usuarios.nome} com ${barbeiro.usuarios.nome} no dia ${data}`,
+    });
+
+    for (let i = 1; admins.length > 1; i++) {
+      await this.notificacoesService.create(admins[i].id, {
+        mensagem: `Novo agendamento: ${cliente.usuarios.nome} com ${barbeiro.usuarios.nome} no dia ${data}`,
+      });
+    }
+
     await this.googleCalendarService.criarEventoAgenda({
       barbeiroEmail: barbeiro.usuarios.email,
       clienteEmail: cliente.usuarios.email,
