@@ -1,7 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router"; // IMPORTADO O USEROUTER
+import { useRouter } from "expo-router"; // IMPORTADO O USEROUTER
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
@@ -12,9 +12,9 @@ export default function SelectScreen() {
 
   const handleContinuar = () => {
     if (perfilSelecionado === "cliente") {
-      /*router.push("/HomeCliente"); // Substitua pela rota real da sua home de cliente*/
+      router.push("/HomeCliente"); 
     } else if (perfilSelecionado === "barbeiro") {
-      /*router.push("/HomeBarbeiro"); // Substitua pela rota real da sua home de barbeiro*/
+      router.push("/SelectBarber");
     }
   };
 

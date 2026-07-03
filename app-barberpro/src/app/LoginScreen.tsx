@@ -6,6 +6,7 @@ import React, { useState } from "react"; // IMPORTADO O USESTATE
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
+import { colors } from "@/colors";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <LinearGradient colors={["#E2E8F0", "#F8FAFC"]} style={styles.container}>
+    <LinearGradient colors={[colors.background, colors.background]} style={styles.container}>
       <LinearGradient colors={["#155DFC", "#3B82F6"]} style={styles.view}>
         <Feather name="scissors" size={60} color="#FFFFFF" />
       </LinearGradient>

@@ -5,7 +5,7 @@ import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/i
 
 let splashJaMostrada = false;
 
-const Index = () => {
+export default function Index() {
     const [fontsLoaded] = useFonts({
     Inter_700Bold,
     Inter_400Regular,
@@ -32,7 +32,4 @@ useEffect(() => {
   if(showSplash) return <SplashScreen />
 
   return <LoginScreen />
-  
-}
-
-export default Index 
+} 

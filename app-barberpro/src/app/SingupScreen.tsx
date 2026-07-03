@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
+import { colors } from "@/colors";
 
 export default function SingupScreen() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function SingupScreen() {
   };
 
   return (
-    <LinearGradient colors={["#FFFFFF", "#F1F5F9"]} style={styles.container}>
+    <LinearGradient colors={[colors.background, colors.background]} style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
