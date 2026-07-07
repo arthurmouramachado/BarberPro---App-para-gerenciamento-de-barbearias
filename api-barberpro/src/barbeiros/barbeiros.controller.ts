@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { BarbeirosService } from './barbeiros.service';
 import { CreateBarbeiroDto } from './dto/create-barbeiro.dto';
@@ -23,6 +24,15 @@ export class BarbeirosController {
   @Get()
   findAll() {
     return this.barbeirosService.findAll();
+  }
+
+  @Get(':id/horarios-disponiveis')
+  buscarHorarios(
+    @Param('id') id: string,
+    @Query('data') data: string,
+    @Query('servicoId') servicoId: string,
+  ) {
+    return this.barbeirosService.buscarHorarios(+id, data, +servicoId);
   }
 
   @Get(':id')

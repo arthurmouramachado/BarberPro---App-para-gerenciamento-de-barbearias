@@ -9,14 +9,15 @@ async function bootstrap() {
   app.use(
     json({
       verify: (req: any, _res, buf) => {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         req.rawBody = buf.toString();
       },
     }),
   );
 
-  app.useGlobalPipes(
-    new ValidationPipe({ transform: true, whitelist: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+
+  app.enableCors();
 
   await app.listen(process.env.PORT ?? 3000);
 }

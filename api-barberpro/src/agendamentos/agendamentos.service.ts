@@ -90,12 +90,8 @@ export class AgendamentosService {
       where: { funcao: 'ADMIN' },
     });
 
-    await this.notificacoesService.create(admins[0].id, {
-      mensagem: `Novo agendamento: ${cliente.usuarios.nome} com ${barbeiro.usuarios.nome} no dia ${data}`,
-    });
-
-    for (let i = 1; admins.length > 1; i++) {
-      await this.notificacoesService.create(admins[i].id, {
+    for (const admin of admins) {
+      await this.notificacoesService.create(admin.id, {
         mensagem: `Novo agendamento: ${cliente.usuarios.nome} com ${barbeiro.usuarios.nome} no dia ${data}`,
       });
     }

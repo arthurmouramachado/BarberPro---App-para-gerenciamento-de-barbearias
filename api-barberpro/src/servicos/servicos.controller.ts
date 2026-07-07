@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ServicosService } from './servicos.service';
 import { CreateServicoDto } from './dto/create-servico.dto';
@@ -21,8 +22,8 @@ export class ServicosController {
   }
 
   @Get()
-  findAll() {
-    return this.servicosService.findAll();
+  findAll(@Query('barbeariaId') barbeariaId?: string) {
+    return this.servicosService.findAll(barbeariaId ? +barbeariaId : undefined);
   }
 
   @Get(':id')
