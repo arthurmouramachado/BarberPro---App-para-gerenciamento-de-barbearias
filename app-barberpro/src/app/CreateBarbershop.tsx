@@ -4,11 +4,13 @@ import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
+import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from "react"; // IMPORTADO O USESTATE
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -20,6 +22,30 @@ import { colors } from "@/colors";
 
 export default function SingupScreen() {
   const router = useRouter();
+
+  const[image, setImage] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    // Solicita permissão para acessar a galeria
+    const permissonResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if(permissonResult.granted === false) {
+      alert("Permissão para acessar a galeria é necessária!");
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  }
 
   // 1. Estados para monitorar os 4 inputs
   const [nomeBarbearia, setNomeBarbearia] = useState("");
@@ -57,10 +83,16 @@ export default function SingupScreen() {
           <Text style={styles.title}>Dados da Barbeaia</Text>
           <Text style={styles.subtitle}>Preencha as informações do seu negócio</Text>
           
-          <TouchableOpacity style={styles.uploadButton}>
+          <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
+            {image ? (
+              <Image source={{ uri: image }} style={{ width: 100, height: 100, borderRadius: 20 }} />
+            ) : ( 
+            <>
             <Octicons name="upload" size={24} color="#64748B" />
             <Text style={styles.uploadText}>Foto da Barbearia</Text>
-            <Text style={styles.subupload}>Clique para fazer upload da imgaem</Text>
+            <Text style={styles.subupload}>Clique para fazer upload da imagem</Text>
+            </>
+            )}
           </TouchableOpacity>
 
           <View style={styles.inputContainer}>
