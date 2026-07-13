@@ -1,11 +1,12 @@
-import Octicons from '@expo/vector-icons/Octicons';
+import Octicons from "@expo/vector-icons/Octicons";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
-import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
-import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from "react"; // IMPORTADO O USESTATE
+import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -23,51 +24,84 @@ import { colors } from "@/colors";
 export default function SingupScreen() {
   const router = useRouter();
 
-  const[image, setImage] = useState<string | null>(null);
+  const [image, setImage] = useState<string | null>(null);
 
-  const pickImage = async () => {
-    // Solicita permissão para acessar a galeria
-    const permissonResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if(permissonResult.granted === false) {
-      alert("Permissão para acessar a galeria é necessária!");
-      return;
-    }
-
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    });
-
-    console.log(result);
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
-    }
-  }
-
-  // 1. Estados para monitorar os 4 inputs
+  // 1. Estados corretos para cada input do formulário
   const [nomeBarbearia, setNomeBarbearia] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [cep, setCep] = useState("");
   const [endereco, setEndereco] = useState("");
+  const [numero, setNumero] = useState("");
   const [cidade, setCidade] = useState("");
   const [estado, setEstado] = useState("");
 
-  // 2. Validação: Todos os campos cheios E as duas senhas iguais
-  const isFormValid = 
-    nomeBarbearia.trim() !== "" && 
-    endereco.trim() !== "" && 
-    cidade.trim() !== "" && 
+  const handleBuscarCep = (texto: string) => {
+
+    const cepLimpo = texto.replace(/\D/g, ""); // Remove qualquer caractere que não seja número
+
+    setCep(cepLimpo); // Atualiza o estado do CEP com o valor limpo
+
+    if(cepLimpo.length === 8) {
+      fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.erro) {
+            setEndereco(`${data.logradouro}, ${data.bairro}`);
+            setCidade(data.localidade);
+            setEstado(data.uf);
+          } else {
+            alert("CEP não encontrado!");
+          }   
+        })
+        .catch((error) => {
+          console.error("Erro ao buscar CEP:", error);
+          alert("Erro ao buscar CEP. Tente novamente.");
+        });
+    } else if (cepLimpo.length === 8) {
+      setEndereco("");
+      setCidade("");
+      setEstado("");
+    }
+  };
+
+  // 2. Validação: O botão só ativa se todos os campos obrigatórios estiverem preenchidos
+  const isFormValid =
+    nomeBarbearia.trim() !== "" &&
+    telefone.trim() !== "" &&
+    cep.trim().length === 8 && // Garante que o CEP tem 8 dígitos
+    endereco.trim() !== "" &&
+    numero.trim() !== "" &&
+    cidade.trim() !== "" &&
     estado.trim() !== "";
 
   const handleCadastro = () => {
     if (isFormValid) {
-      router.push("/SelectScreen"); 
+      router.push("/SelectScreen");
+    }
+  };
+
+  const pickImage = async () => {
+    const permissonResult =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissonResult.granted === false) {
+      alert("Permissão para acessar a galeria é necessária!");
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
     }
   };
 
   return (
-    <LinearGradient colors={[colors.background, colors.background]} style={styles.container}>
+    <LinearGradient
+      colors={[colors.background, colors.background]}
+      style={styles.container}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
@@ -77,79 +111,171 @@ export default function SingupScreen() {
           showsVerticalScrollIndicator={false}
         >
           <LinearGradient colors={["#155DFC", "#3B82F6"]} style={styles.view}>
-             <FontAwesome6 name="building" size={40} color="#FFFFFF" />
+            <FontAwesome6 name="building" size={40} color="#FFFFFF" />
           </LinearGradient>
 
-          <Text style={styles.title}>Dados da Barbeaia</Text>
-          <Text style={styles.subtitle}>Preencha as informações do seu negócio</Text>
-          
+          <Text style={styles.title}>Dados da Barbearia</Text>
+          <Text style={styles.subtitle}>
+            Preencha as informações do seu negócio
+          </Text>
+
           <TouchableOpacity style={styles.uploadButton} onPress={pickImage}>
             {image ? (
-              <Image source={{ uri: image }} style={{ width: 100, height: 100, borderRadius: 20 }} />
-            ) : ( 
-            <>
-            <Octicons name="upload" size={24} color="#64748B" />
-            <Text style={styles.uploadText}>Foto da Barbearia</Text>
-            <Text style={styles.subupload}>Clique para fazer upload da imagem</Text>
-            </>
+              <Image
+                source={{ uri: image }}
+                style={{ width: 100, height: 100, borderRadius: 20 }}
+              />
+            ) : (
+              <>
+                <Octicons name="upload" size={24} color="#64748B" />
+                <Text style={styles.uploadText}>Foto da Barbearia</Text>
+                <Text style={styles.subupload}>
+                  Clique para fazer upload da imagem
+                </Text>
+              </>
             )}
           </TouchableOpacity>
 
+          {/* Nome da Barbearia */}
           <View style={styles.inputContainer}>
-            <FontAwesome6 name="building" size={24} color="#64748B" style={styles.icon} />
+            <FontAwesome6
+              name="building"
+              size={24}
+              color="#64748B"
+              style={styles.icon}
+            />
             <Input
-              placeholder="Nome da Barbearia"
+              placeholder="Nome da barbearia"
               placeholderTextColor="#9CA3AF"
-              keyboardType="email-address"
               style={styles.input}
               value={nomeBarbearia}
               onChangeText={setNomeBarbearia}
             />
           </View>
 
+          {/* Telefone */}
           <View style={styles.inputContainer}>
-            <SimpleLineIcons name="location-pin" size={24} color="#64748B" style={styles.icon} />
+            <Feather
+              name="phone"
+              size={24}
+              color="#64748B"
+              style={styles.icon}
+            />
             <Input
-              placeholder="Endereço completo"
+              placeholder="Telefone / Celular"
               placeholderTextColor="#9CA3AF"
               keyboardType="phone-pad"
+              style={styles.input}
+              value={telefone}
+              onChangeText={setTelefone}
+            />
+          </View>
+
+          {/* CEP (Obrigatório para o autocomplete funcionar) */}
+          <View style={styles.inputContainer}>
+            <SimpleLineIcons
+              name="envelope"
+              size={24}
+              color="#64748B"
+              style={styles.icon}
+            />
+            <Input
+              placeholder="Digite seu CEP"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="numeric"
+              maxLength={8}
+              style={styles.input}
+              value={cep}
+              onChangeText={handleBuscarCep}
+            />
+          </View>
+
+          {/* Endereço Completo */}
+          <View style={styles.inputContainer}>
+            <SimpleLineIcons
+              name="location-pin"
+              size={24}
+              color="#64748B"
+              style={styles.icon}
+            />
+            <Input
+              placeholder="Endereço completo (Rua e Bairro)"
+              placeholderTextColor="#9CA3AF"
               style={styles.input}
               value={endereco}
               onChangeText={setEndereco}
             />
           </View>
 
+          {/* Número / Local */}
           <View style={styles.inputContainer}>
-            <SimpleLineIcons name="location-pin" size={24} color="#64748B" style={styles.icon} />
+            <FontAwesome5
+              name="home"
+              size={20}
+              color="#64748B"
+              style={styles.icon}
+            />
             <Input
-              placeholder="Cidade"
+              placeholder="Número / Complemento"
               placeholderTextColor="#9CA3AF"
               style={styles.input}
-              value={cidade}
-              onChangeText={setCidade}
+              value={numero}
+              onChangeText={setNumero}
             />
           </View>
 
-          <View style={styles.inputContainer}>
-            <SimpleLineIcons name="location-pin" size={24} color="#64748B" style={styles.icon} />
-            <Input
-              placeholder="Estado"
-              placeholderTextColor="#9CA3AF"
-              style={styles.input}
-              value={estado}
-              onChangeText={setEstado}
-            />
+          {/* CONTAINER LADO A LADO: CIDADE E ESTADO */}
+          <View style={styles.rowContainer}>
+            {/* Cidade */}
+            <View style={[styles.inputContainer, styles.halfInput]}>
+              <SimpleLineIcons
+                name="location-pin"
+                size={20}
+                color="#64748B"
+                style={styles.icon}
+              />
+              <Input
+                placeholder="Cidade"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+                value={cidade}
+                onChangeText={setCidade}
+              />
+            </View>
+
+            {/* Estado */}
+            <View style={[styles.inputContainer, styles.halfInput]}>
+              <SimpleLineIcons
+                name="location-pin"
+                size={20}
+                color="#64748B"
+                style={styles.icon}
+              />
+              <Input
+                placeholder="ESTADO"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="characters"
+                maxLength={2}
+                style={styles.input}
+                value={estado}
+                onChangeText={setEstado}
+              />
+            </View>
           </View>
 
-          {/* Botão dinâmico controlado pelo estado do form */}
           <Button
             label="Criar Conta"
             style={styles.button}
             isActive={isFormValid}
             onPress={handleCadastro}
-            icon={<FontAwesome5 name="check-circle" size={24} color={isFormValid ? "#FFFFFF" : "#94A3B8"} />}
+            icon={
+              <FontAwesome5
+                name="check-circle"
+                size={24}
+                color={isFormValid ? "#FFFFFF" : "#94A3B8"}
+              />
+            }
           />
-
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
@@ -157,13 +283,8 @@ export default function SingupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-    width: "100%",
-  },
+  container: { flex: 1 },
+  keyboardView: { flex: 1, width: "100%" },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
@@ -171,8 +292,8 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   view: {
-    width: 100,
-    height: 100,
+    width: 90,
+    height: 90,
     borderRadius: 25,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
@@ -185,7 +306,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Inter_700Bold",
     color: "#000",
-    fontSize: 40,
+    fontSize: 30,
     marginTop: 28,
     textAlign: "center",
   },
@@ -213,9 +334,7 @@ const styles = StyleSheet.create({
     borderWidth: 0.4,
     borderColor: "#9CA3AF",
   },
-  icon: {
-    marginRight: 12,
-  },
+  icon: { marginRight: 12 },
   input: {
     flex: 1,
     height: "100%",
@@ -224,26 +343,8 @@ const styles = StyleSheet.create({
     color: "#000",
     borderRadius: 20,
   },
-  button: {
-    marginTop: 40,
-  },
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 40,
-  },
-  signUpText: {
-    fontFamily: "Inter_400Regular",
-    color: "#64748B",
-    fontSize: 16,
-  },
-  signUpLink: {
-    fontFamily: "Inter_700Bold",
-    color: "#155DFC",
-    fontSize: 16,
-  },
-uploadButton: {
+  button: { marginTop: 40 },
+  uploadButton: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#9CA3AF",
@@ -265,10 +366,20 @@ uploadButton: {
     fontSize: 16,
     marginTop: 10,
   },
-    subupload: {
+  subupload: {
     fontFamily: "Inter_400Regular",
     color: "#64748B",
     fontSize: 14,
     marginTop: 5,
+  },
+
+  // ESTILOS NOVOS PARA O LADO A LADO
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: 300, // Alinhado com a largura total dos outros inputs
+  },
+  halfInput: {
+    width: 144, // Metade do espaço considerando um pequeno respiro entre eles
   },
 });

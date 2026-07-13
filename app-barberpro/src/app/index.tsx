@@ -3,6 +3,8 @@ import LoginScreen from './LoginScreen'
 import SplashScreen from './SplashScreen'
 import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/inter';
 
+import HomeCliente from './HomeCliente';
+
 let splashJaMostrada = false;
 
 export default function Index() {
@@ -19,7 +21,7 @@ useEffect(() => {
 
   const timer = setTimeout(() => {
     setShowSplash(false);
-    splashJaMostrada = true; // 🌟 Salva na memória externa que a Splash já rodou!
+    splashJaMostrada = true; //  Salva na memória externa que a Splash já rodou!
   }, 3000);
 
   return () => clearTimeout(timer); // Boa prática para limpar o timer se o app fechar
@@ -31,5 +33,5 @@ useEffect(() => {
 
   if(showSplash) return <SplashScreen />
 
-  return <LoginScreen />
+  return <HomeCliente />
 } 
