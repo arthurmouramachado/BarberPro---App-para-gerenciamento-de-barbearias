@@ -21,7 +21,7 @@ import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
 import { colors } from "@/colors";
 
-export default function SingupScreen() {
+export default function CreateBarbershop() {
   const router = useRouter();
 
   const [image, setImage] = useState<string | null>(null);

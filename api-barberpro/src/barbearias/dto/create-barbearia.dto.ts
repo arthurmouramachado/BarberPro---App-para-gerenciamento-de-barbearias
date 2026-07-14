@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class CreateBarbeariaDto {
   @IsString()
@@ -10,7 +10,7 @@ export class CreateBarbeariaDto {
   @IsString()
   telefone?: string;
 
-  @IsUrl({}, { message: 'A URL da imagem é inválida' })
+  @IsString()
   @IsOptional()
   foto_url?: string;
 }

@@ -33,5 +33,5 @@ useEffect(() => {
 
   if(showSplash) return <SplashScreen />
 
-  return <HomeCliente />
+  return <LoginScreen />
 } 
