@@ -1,17 +1,19 @@
-import Octicons from "@expo/vector-icons/Octicons";
+import { colors } from "@/colors";
+import { barbeariaService } from "@/services/barbeariaService";
+import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Octicons from "@expo/vector-icons/Octicons";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
-import Feather from "@expo/vector-icons/Feather";
+import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -19,7 +21,6 @@ import {
 } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
-import { colors } from "@/colors";
 
 export default function CreateBarbershop() {
   const router = useRouter();
@@ -36,12 +37,11 @@ export default function CreateBarbershop() {
   const [estado, setEstado] = useState("");
 
   const handleBuscarCep = (texto: string) => {
-
     const cepLimpo = texto.replace(/\D/g, ""); // Remove qualquer caractere que não seja número
 
     setCep(cepLimpo); // Atualiza o estado do CEP com o valor limpo
 
-    if(cepLimpo.length === 8) {
+    if (cepLimpo.length === 8) {
       fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
         .then((response) => response.json())
         .then((data) => {
@@ -51,7 +51,7 @@ export default function CreateBarbershop() {
             setEstado(data.uf);
           } else {
             alert("CEP não encontrado!");
-          }   
+          }
         })
         .catch((error) => {
           console.error("Erro ao buscar CEP:", error);
@@ -74,9 +74,50 @@ export default function CreateBarbershop() {
     cidade.trim() !== "" &&
     estado.trim() !== "";
 
-  const handleCadastro = () => {
+  const handleCadastro = async () => {
     if (isFormValid) {
-      router.push("/SelectScreen");
+      try {
+        // 1. Criamos a "caixa de encomendas" (FormData) normalmente
+        const formData = new FormData();
+
+        // 2. Adicionamos os textos
+        formData.append("nome", nomeBarbearia);
+        formData.append("telefone", telefone);
+
+        // 3. Juntamos o endereço (Opção A)
+        const enderecoCompleto = `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
+        formData.append("endereco", enderecoCompleto);
+
+        // 4. Se houver imagem selecionada no ImagePicker, adicionamos na caixa
+        if (image) {
+          const uriParts = image.split(".");
+          const fileType = uriParts[uriParts.length - 1];
+
+          formData.append("foto", {
+            uri: image,
+            name: `barbearia_${Date.now()}.${fileType}`,
+            type: `image/${fileType}`,
+          } as any);
+        }
+
+        // 5. CONEXÃO COM A SUA API!
+        // Enviamos toda a nossa "caixa" (formData) diretamente para o seu serviço!
+        const resultado = await barbeariaService.cadastrar(formData);
+
+        console.log("Barbearia cadastrada com sucesso via Axios:", resultado);
+        alert("Barbearia cadastrada com sucesso!");
+
+        // Redireciona o usuário após o sucesso
+        router.push("/HomeBarbeiro");
+      } catch (error: any) {
+        console.error("Erro na integração com o servidor:", error);
+
+        // Tratamento de erro amigável se a API retornar alguma mensagem do NestJS (ex: validações)
+        const mensagemErro =
+          error.response?.data?.message ||
+          "Não foi possível conectar ao servidor. Verifique se o seu NestJS está rodando.";
+        alert(`Erro: ${mensagemErro}`);
+      }
     }
   };
 
