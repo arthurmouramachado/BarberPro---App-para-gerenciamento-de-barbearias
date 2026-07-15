@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-const API_URL = process.env.EXPO_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 if (!API_URL) {
-  throw new Error('EXPO_API_URL não foi configurada.');
+  throw new Error('EXPO_PUBLIC_API_URL não foi configurada.');
 }
 
 export const api = axios.create({
