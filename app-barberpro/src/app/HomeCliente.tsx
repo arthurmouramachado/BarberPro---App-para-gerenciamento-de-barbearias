@@ -1,30 +1,74 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React from 'react'
-import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '@/colors';
-import { Input } from '@/_components/Input';
-import { StaggeredText } from '@/_components/ui/AnimatedText';
-import { useFonts, Inter_700Bold } from '@expo-google-fonts/inter';
+import { Input } from "@/_components/Input";
+import { StaggeredText } from "@/_components/ui/AnimatedText";
+import { colors } from "@/colors";
+import { Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
+import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function HomeCliente() {
-
-  // 2. Carrega a fonte dentro do componente
   const [fontsLoaded] = useFonts({
     Inter_700Bold,
   });
 
-  // 3. Se a fonte não carregou, exibe uma tela vazia (ou um indicador de carregamento)
+  const [localizacaoTexto, setLocalizacaoTexto] = useState<string>("");
+  const [buscarBarbearia, setBuscarBarbearia] = useState<string>("");
+  const [carregandoGPS, setCarregandoGPS] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null,
+  );
+
+  const obterLocalizacao = async () => {
+    setCarregandoGPS(true);
+    setErrorMsg(null); // Limpa mensagens de erro anteriores
+
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      setErrorMsg("Permissão para acessar a localização foi negada");
+      setCarregandoGPS(false);
+      return;
+    }
+
+    try {
+      const posicaoObtida = await Location.getCurrentPositionAsync({});
+      setLocation(posicaoObtida);
+      setLocalizacaoTexto(
+        `${posicaoObtida.coords.latitude}, ${posicaoObtida.coords.longitude}`,
+      );
+
+      const resposta = await Location.reverseGeocodeAsync({
+        latitude: posicaoObtida.coords.latitude,
+        longitude: posicaoObtida.coords.longitude,
+      });
+
+      if (resposta.length > 0) {
+        const local = resposta[0];
+        const numero = local.streetNumber ? `, ${local.streetNumber}` : "";
+        const endereco = `${local.street}${numero}, ${local.district}, ${local.city}, ${local.region}, ${local.country}`;
+        setLocalizacaoTexto(endereco);
+      }
+    } catch (error) {
+      setErrorMsg("Erro ao obter a localização");
+    } finally {
+      setCarregandoGPS(false);
+    }
+  };
+
+ 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient colors={[colors.primary, colors.secondary]} style={{ padding: 45, borderRadius: 20, marginBottom: 20 }}>
-      
+      <LinearGradient
+        colors={[colors.primary, colors.secondary]}
+        style={{ padding: 45, borderRadius: 20, marginBottom: 20 }}
+      >
         <View style={styles.headercontainer}>
-  
           {/* 1. Bloco da Esquerda (Textos) */}
           <View>
             <StaggeredText text="Olá," style={styles.text1} />
@@ -32,17 +76,41 @@ export default function HomeCliente() {
           </View>
 
           {/* 2. Bloco da Direita (Botão de Localização) */}
-          <TouchableOpacity style={styles.locationButton} onPress={() => { /* Aqui você pode adicionar a lógica para pegar a localização */ }}>
+          <TouchableOpacity
+            style={styles.locationButton}
+            onPress={() => {
+              obterLocalizacao();
+            }}
+          >
             <SimpleLineIcons name="location-pin" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-
         </View>
 
-      <Input placeholder='Digite o nome da Barbearia' style={styles.input} />
-      <Input placeholder='Digite sua localização' style={styles.input} />
+        <Input
+          placeholder="Digite o nome da Barbearia"
+          style={styles.input}
+          value={buscarBarbearia} // Conecta o input ao estado
+          onChangeText={setBuscarBarbearia} // Atualiza o estado quando o usuário digita
+        />
+
+        <Input
+          placeholder="Digite sua localização"
+          style={styles.input}
+          editable={!carregandoGPS} // Fica desativado se estiver carregando, e ativo quando terminar
+          value={localizacaoTexto} // Mostra o endereço do GPS ou o que o usuário digitar
+          onChangeText={setLocalizacaoTexto} // Permite que o usuário digite e corrija o texto!
+          multiline={true} // Permite que o texto quebre linhas se o endereço for muito longo
+          numberOfLines={2}
+        />
+
+        {errorMsg && (
+          <Text style={{ color: "red", textAlign: "center", marginTop: 10 }}>
+            {errorMsg}
+          </Text>
+        )}
       </LinearGradient>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -50,35 +118,35 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headercontainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between', // Joga o texto para a esquerda e o botão para a direita
-    alignItems: 'center',            // Alinha os dois verticalmente ao centro
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between", // Joga o texto para a esquerda e o botão para a direita
+    alignItems: "center", // Alinha os dois verticalmente ao centro
+    width: "100%",
     marginBottom: 20,
   },
   input: {
     height: 45,
     paddingHorizontal: 15,
     marginTop: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 10,
   },
   text1: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 20,
     fontFamily: "Inter_700Bold",
   },
   text2: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 30,
     fontFamily: "Inter_700Bold",
   },
   locationButton: {
-    width: 50,                       // Largura física do botão
-    height: 50,                      // Altura física do botão
-    borderRadius: 25,                // Metade de 50 = Círculo Perfeito!
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Branco com 20% de opacidade (efeito vidro)
-    justifyContent: 'center',        // Centraliza o ícone dentro da bolinha (vertical)
-    alignItems: 'center',            // Centraliza o ícone dentro da bolinha (horizontal)
+    width: 50, // Largura física do botão
+    height: 50, // Altura física do botão
+    borderRadius: 25, // Metade de 50 = Círculo Perfeito!
+    backgroundColor: "rgba(255, 255, 255, 0.2)", // Branco com 20% de opacidade (efeito vidro)
+    justifyContent: "center", // Centraliza o ícone dentro da bolinha (vertical)
+    alignItems: "center", // Centraliza o ícone dentro da bolinha (horizontal)
   },
-})
+});
