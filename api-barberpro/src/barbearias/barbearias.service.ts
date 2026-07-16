@@ -19,13 +19,45 @@ export class BarbeariasService {
     });
   }
 
-  findAll() {
-    return this.prisma.barbearias.findMany({
+  async findAll() {
+    const barbearias = await this.prisma.barbearias.findMany({
       include: {
-        barbeiros: true,
+        barbeiros: {
+          include: {
+            agendamentos: {
+              include: {
+                avaliacao: true,
+              },
+            },
+          },
+        },
         servicos: true,
       },
     });
+
+    const barbeariasComMedia = barbearias.map((barbearia) => {
+      const barbeirosDestaBarbearia = barbearia.barbeiros;
+
+      const avaliacoes = barbeirosDestaBarbearia.flatMap((barbeiro) =>
+        barbeiro.agendamentos.flatMap((agendamento) =>
+          agendamento.avaliacao ? [agendamento.avaliacao] : [],
+        ),
+      );
+
+      const totalReviews = avaliacoes.length;
+
+      const somaNotas = avaliacoes.reduce((acc, avaliacao) => {
+        return acc + (avaliacao?.nota ?? 0);
+      }, 0);
+
+      const mediaAvaliacoes = totalReviews > 0 ? somaNotas / totalReviews : 0;
+
+      return {
+        ...barbearia,
+        mediaAvaliacoes: Number(mediaAvaliacoes.toFixed(1)),
+      };
+    });
+    return barbeariasComMedia;
   }
 
   async findOne(id: number) {

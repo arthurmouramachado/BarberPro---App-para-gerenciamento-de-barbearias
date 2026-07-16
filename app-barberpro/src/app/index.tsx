@@ -22,7 +22,7 @@ useEffect(() => {
   const timer = setTimeout(() => {
     setShowSplash(false);
     splashJaMostrada = true; //  Salva na memória externa que a Splash já rodou!
-  }, 3000);
+  }, 1500);
 
   return () => clearTimeout(timer); // Boa prática para limpar o timer se o app fechar
 }, []);

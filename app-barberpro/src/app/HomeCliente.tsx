@@ -21,6 +21,8 @@ export default function HomeCliente() {
     null,
   );
 
+  console.log(location);
+
   const obterLocalizacao = async () => {
     setCarregandoGPS(true);
     setErrorMsg(null); // Limpa mensagens de erro anteriores
@@ -47,7 +49,7 @@ export default function HomeCliente() {
       if (resposta.length > 0) {
         const local = resposta[0];
         const numero = local.streetNumber ? `, ${local.streetNumber}` : "";
-        const endereco = `${local.street}${numero}, ${local.district}, ${local.city}, ${local.region}, ${local.country}`;
+        const endereco = `${local.street}${numero}, ${local.district}, ${local.subregion}, ${local.region}`;
         setLocalizacaoTexto(endereco);
       }
     } catch (error) {
