@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import LoginScreen from './LoginScreen'
 import SplashScreen from './SplashScreen'
 import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/inter';
-import HomeCliente from './HomeCliente';
+import { NavegacaoPrincipal } from './routes/tab.routes';
+import { NavigationIndependentTree } from '@react-navigation/native';
 
 
 let splashJaMostrada = false;
@@ -33,5 +34,9 @@ useEffect(() => {
 
   if(showSplash) return <SplashScreen />
 
-  return <LoginScreen />
+  return (
+    <NavigationIndependentTree>
+      <NavegacaoPrincipal />
+    </NavigationIndependentTree>
+  );
 } 

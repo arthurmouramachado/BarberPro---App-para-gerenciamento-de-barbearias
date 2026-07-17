@@ -1,14 +1,24 @@
+import BarbeariaCard from "@/_components/BarbeariaCard";
 import { Input } from "@/_components/Input";
-import BarbeariaCard, {} from '@/_components/BarbeariaCard'
 import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
 import { Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
-import React, { useState, useEffect } from "react";
-import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { barbeariaService, BarbeariaCardDTO } from '../services/barbeariaService';  
+import React, { useEffect, useState } from "react";
+import {
+    ActivityIndicator,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from "react-native";
+import {
+    BarbeariaCardDTO,
+    barbeariaService,
+} from "../services/barbeariaService";
 
 export default function HomeCliente() {
   const [fontsLoaded] = useFonts({
@@ -22,22 +32,22 @@ export default function HomeCliente() {
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
   );
-  
-  const [barbearia, setBarbearia] = useState<BarbeariaCardDTO[]>([])
-  const [loading, setLoading] = useState(true)
+
+  const [barbearia, setBarbearia] = useState<BarbeariaCardDTO[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const buscarDadosBarbearia = async () => {
-    try{
+    try {
       const listarBarbearias = await barbeariaService.listarTodas();
       setBarbearia(listarBarbearias);
       setLoading(false);
-    } catch{
-        console.error("Erro de requisição")
-        setLoading(false)
-    } 
-  }
+    } catch {
+      console.error("Erro de requisição");
+      setLoading(false);
+    }
+  };
 
-  useEffect(() =>{
+  useEffect(() => {
     buscarDadosBarbearia();
   }, []);
 
@@ -80,7 +90,6 @@ export default function HomeCliente() {
     }
   };
 
- 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
@@ -133,14 +142,17 @@ export default function HomeCliente() {
         )}
       </LinearGradient>
 
-      {loading ? <ActivityIndicator size={"large"} color={"#000"} /> : <FlatList 
-      data={barbearia}
-      keyExtractor={(item) => String(item.id)}
-      renderItem={({item}) => <BarbeariaCard barbearia={item}/>}
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
-      />}
-
+      {loading ? (
+        <ActivityIndicator size={"large"} color={"#000"} />
+      ) : (
+        <FlatList
+          data={barbearia}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={({ item }) => <BarbeariaCard barbearia={item} />}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+        />
+      )}
     </View>
   );
 }
