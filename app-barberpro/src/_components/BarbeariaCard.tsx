@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native'
 import { BarbeariaCardDTO } from '../services/barbeariaService'
 import React from 'react'
 
-export default function BarbeariaCard({ barbearia }: { barbearia: BarbeariaCardDTO }) {
+export function BarbeariaCard({ barbearia }: { barbearia: BarbeariaCardDTO }) {
   return (
       <TouchableOpacity style={styles.container}>
 

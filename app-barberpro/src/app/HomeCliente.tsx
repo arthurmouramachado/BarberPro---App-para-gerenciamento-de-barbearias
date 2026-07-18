@@ -1,4 +1,4 @@
-import BarbeariaCard from "@/_components/BarbeariaCard";
+import { BarbeariaCard } from "@/_components/BarbeariaCard";
 import { Input } from "@/_components/Input";
 import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
