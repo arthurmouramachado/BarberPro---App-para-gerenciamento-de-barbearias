@@ -2,12 +2,11 @@ import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
 import { Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
     StyleSheet,
-    Text,
-    TouchableOpacity,
     View,
+    FlatList
 } from "react-native";
 import SegmentedControl from '@react-native-segmented-control/segmented-control';
 import { AgendamentoCard } from "@/_components/AgendamentoCard";
@@ -22,6 +21,11 @@ export default function AgendamntosCliente() {
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
+
+  const AGENDAMENTOS_MOCK = [
+    { id: '1', barbearia: 'Barbearia Moderna' },
+    { id: '2', barbearia: 'Barba & Navalha' },
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -50,7 +54,12 @@ export default function AgendamntosCliente() {
 
       </LinearGradient>
       
-      <AgendamentoCard/>
+      <FlatList 
+        data={AGENDAMENTOS_MOCK}
+        keyExtractor={(item) => String(item.id)}
+        renderItem={() => <AgendamentoCard />}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{paddingBottom: 40}}/>
 
     </View>
   );

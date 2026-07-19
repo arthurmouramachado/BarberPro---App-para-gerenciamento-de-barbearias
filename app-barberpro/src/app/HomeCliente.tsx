@@ -150,7 +150,7 @@ export default function HomeCliente() {
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => <BarbeariaCard barbearia={item} />}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 30, paddingVertical:10, paddingBottom: 20 }}
         />
       )}
     </View>
