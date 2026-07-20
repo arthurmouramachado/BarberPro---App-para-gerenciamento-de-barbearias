@@ -4,6 +4,7 @@ import SplashScreen from './SplashScreen'
 import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/inter';
 import { NavegacaoPrincipal } from './routes/tab.routes';
 import { NavigationIndependentTree } from '@react-navigation/native';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 
 let splashJaMostrada = false;
@@ -36,7 +37,9 @@ useEffect(() => {
 
   return (
     <NavigationIndependentTree>
-      <NavegacaoPrincipal />
+      <AuthProvider>
+        <NavegacaoPrincipal />
+      </AuthProvider>
     </NavigationIndependentTree>
   );
 } 

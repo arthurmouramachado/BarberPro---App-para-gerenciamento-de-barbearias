@@ -30,6 +30,11 @@ export class AgendamentosController {
     return this.agendamentosService.findOne(+id);
   }
 
+  @Get('cliente/:clienteId')
+  findByCliente(@Param('clienteId') clienteId: string) {
+    return this.agendamentosService.findByCliente(+clienteId);
+  }
+
   @Patch(':id')
   update(
     @Param('id') id: string,

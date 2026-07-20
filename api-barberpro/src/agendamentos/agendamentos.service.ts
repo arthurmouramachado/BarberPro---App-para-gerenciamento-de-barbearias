@@ -116,7 +116,12 @@ export class AgendamentosService {
     return this.prisma.agendamentos.findMany({
       include: {
         clientes: true,
-        barbeiros: true,
+        barbeiros: {
+          include: {
+            barbearias: true,
+            usuarios: true,
+          },
+        },
         servicos: true,
       },
     });
@@ -134,6 +139,26 @@ export class AgendamentosService {
 
     if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
     return agendamento;
+  }
+
+  async findByCliente(cliente_id: number) {
+    return this.prisma.agendamentos.findMany({
+      where: {
+        cliente_id: Number(cliente_id),
+      },
+      include: {
+        barbeiros: {
+          include: {
+            barbearias: true,
+            usuarios: true,
+          },
+        },
+        clientes: true,
+        servicos: true,
+      },
+      take: 10,
+      orderBy: { data: 'desc' },
+    });
   }
 
   async update(id: number, updateAgendamentoDto: UpdateAgendamentoDto) {
@@ -159,6 +184,9 @@ export class AgendamentosService {
   async remove(id: number) {
     await this.findOne(id); // Verifica se o agendamento existe antes de deletar
 
-    return this.prisma.agendamentos.delete({ where: { id } });
+    return this.prisma.agendamentos.update({
+      where: { id },
+      data: { status: 'CANCELADO' },
+    });
   }
 }

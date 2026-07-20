@@ -15,6 +15,11 @@ export const agendamentosService = {
       return response.data;
     },
 
+    async buscarPorCliente(cliente_id: Number) {
+      const response = await api.get(`cliente/${cliente_id}`);
+      return response.data;
+    },
+
     async cancelar(id: string) {
       const response = await api.delete(`/agendamentos/${id}`);
       return response.data;
