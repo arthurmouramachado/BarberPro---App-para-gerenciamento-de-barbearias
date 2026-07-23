@@ -77,18 +77,17 @@ export default function CreateBarbershop() {
   const handleCadastro = async () => {
     if (isFormValid) {
       try {
-        // 1. Criamos a "caixa de encomendas" (FormData) normalmente
+        
         const formData = new FormData();
 
-        // 2. Adicionamos os textos
+      
         formData.append("nome", nomeBarbearia);
         formData.append("telefone", telefone);
 
-        // 3. Juntamos o endereço (Opção A)
+        
         const enderecoCompleto = `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
         formData.append("endereco", enderecoCompleto);
 
-        // 4. Se houver imagem selecionada no ImagePicker, adicionamos na caixa
         if (image) {
           const uriParts = image.split(".");
           const fileType = uriParts[uriParts.length - 1];
@@ -100,9 +99,7 @@ export default function CreateBarbershop() {
           } as any);
         }
 
-        // 5. CONEXÃO COM A SUA API!
-        // Enviamos toda a nossa "caixa" (formData) diretamente para o seu serviço!
-        const resultado = await barbeariaService.cadastrar(formData);
+        const resultado = await barbeariaService.cadastrar(formData as any);
 
         console.log("Barbearia cadastrada com sucesso via Axios:", resultado);
         alert("Barbearia cadastrada com sucesso!");

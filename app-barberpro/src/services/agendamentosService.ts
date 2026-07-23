@@ -16,7 +16,7 @@ export const agendamentosService = {
     },
 
     async buscarPorCliente(cliente_id: Number) {
-      const response = await api.get(`cliente/${cliente_id}`);
+      const response = await api.get(`/agendamentos/cliente/${cliente_id}`);
       return response.data;
     },
 

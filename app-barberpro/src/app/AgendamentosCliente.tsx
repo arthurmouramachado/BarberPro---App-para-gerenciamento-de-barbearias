@@ -29,7 +29,7 @@ export default function AgendamentosCliente() {
   // Função para buscar agendamentos na API
   const carregarAgendamentos = useCallback(async () => {
     if (!user?.clienteId) return;
-
+    
     try {
       setLoading(true);
       const data = await agendamentosService.buscarPorCliente(user.clienteId);
@@ -97,7 +97,7 @@ export default function AgendamentosCliente() {
             setSelectedIndex(event.nativeEvent.selectedSegmentIndex);
           }}
           tintColor="#FFFFFF"
-          fontStyle={{ color: '#FFFFFF', fontFamily: 'Inter_400Regular' }}
+          fontStyle={{ color: '#FFFFFF', fontFamily: 'Inter_700Bold' }}
           activeFontStyle={{ color: '#155DFC', fontFamily: 'Inter_700Bold' }}
           style={styles.switch}
         />
