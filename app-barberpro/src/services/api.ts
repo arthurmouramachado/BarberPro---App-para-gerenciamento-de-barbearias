@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -16,8 +17,10 @@ export const api = axios.create({
 
 // Dica extra: Interceptor para injetar o Token JWT automaticamente mais para frente
 api.interceptors.request.use(async (config) => {
-  // Se você salvar o token no AsyncStorage, você o recupera aqui
-  // config.headers.Authorization = `Bearer ${token}`;
+  const token = await AsyncStorage.getItem('@BarberPro:token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 }, (error) => {
   return Promise.reject(error);

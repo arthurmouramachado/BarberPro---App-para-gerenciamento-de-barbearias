@@ -1,36 +1,66 @@
+import { colors } from "@/colors";
+import { useAuth } from "@/contexts/AuthContext";
 import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
 import React, { useState } from "react"; // IMPORTADO O USESTATE
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
-import { colors } from "@/colors";
 
 export default function LoginScreen() {
   const router = useRouter();
-  
+
+  const { user, signIn } = useAuth();
+
   // 1. Criando os estados para monitorar o que é digitado
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // 2. Regra de validação: Só é válido se email E senha não estiverem vazios
   const isFormValid = email.trim() !== "" && senha.trim() !== "";
+
+  
+  const handleLogin = async () => {
+    
+    if(!isFormValid) return;
+    
+
+    try {
+      setIsLoading(true);
+      const loginFeito = await signIn(email, senha);
+      const perfil = loginFeito?.funcao;
+
+      if (perfil === "CLIENTE") {
+        router.replace("./Clintes/HomeClinete");
+      } else if (perfil === "BARBEIRO" || perfil === "ADMIN") {
+        router.replace("./Barbeiro/HomeBarbeiro");
+      }
+    } catch (error) {
+      Alert.alert("Email ou Senha Incorretos", "Tente novamente");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const handleForgotPassword = () => {
     alert("Email para redefinir senha enviado!");
   };
 
   return (
-    <LinearGradient colors={[colors.background, colors.background]} style={styles.container}>
+    <LinearGradient
+      colors={[colors.background, colors.background]}
+      style={styles.container}
+    >
       <LinearGradient colors={["#155DFC", "#3B82F6"]} style={styles.view}>
         <Feather name="scissors" size={60} color="#FFFFFF" />
       </LinearGradient>
-      
+
       <Text style={styles.title}>Bem-Vindo!</Text>
       <Text style={styles.subtitle}>Entre com sua Conta</Text>
-      
+
       <View style={styles.inputContainer}>
         <Fontisto name="email" size={24} color="#64748B" style={styles.icon} />
         <Input
@@ -38,8 +68,8 @@ export default function LoginScreen() {
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
           style={styles.input}
-          value={email}            // Vincula o valor ao estado
-          onChangeText={setEmail}  // Atualiza o estado ao digitar
+          value={email} // Vincula o valor ao estado
+          onChangeText={setEmail} // Atualiza o estado ao digitar
         />
       </View>
 
@@ -50,11 +80,11 @@ export default function LoginScreen() {
           placeholderTextColor="#9CA3AF"
           style={styles.input}
           secureTextEntry
-          value={senha}            // Vincula o valor ao estado
-          onChangeText={setSenha}  // Atualiza o estado ao digitar
+          value={senha} // Vincula o valor ao estado
+          onChangeText={setSenha} // Atualiza o estado ao digitar
         />
       </View>
-      
+
       <TouchableOpacity
         style={styles.esqueciSenhaContainer}
         onPress={handleForgotPassword}
@@ -63,11 +93,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       {/* O botão recebe dinamicamente o resultado da validação */}
-      <Button 
-        label="Entrar" 
-        style={styles.button} 
-        isActive={isFormValid} 
-      />
+      <Button label="Entrar" style={styles.button} isActive={isFormValid && !isLoading} onPress={handleLogin} />
 
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Não tem conta? </Text>
@@ -136,16 +162,16 @@ const styles = StyleSheet.create({
     color: "#000",
     borderRadius: 20,
   },
-esqueciSenhaContainer: {
+  esqueciSenhaContainer: {
     width: 300,
     alignItems: "flex-end",
-    marginTop: 8,         // Deixa colado embaixo do input como no Figma
-    paddingRight: 8,      // Ajuste fino para alinhar com a parte reta do input
+    marginTop: 8, // Deixa colado embaixo do input como no Figma
+    paddingRight: 8, // Ajuste fino para alinhar com a parte reta do input
   },
   esquecisenhaText: {
     fontFamily: "Inter_400Regular", // Um peso médio fica excelente para links
-    color: "#155DFC",              // O azul do seu projeto
-    fontSize: 18,                  // Tamanho ideal para não carregar o visual
+    color: "#155DFC", // O azul do seu projeto
+    fontSize: 18, // Tamanho ideal para não carregar o visual
   },
   button: {
     marginTop: 50,

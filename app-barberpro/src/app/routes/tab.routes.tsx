@@ -3,10 +3,9 @@ import Feather from "@expo/vector-icons/Feather";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStaticNavigation } from "@react-navigation/native";
 
-import PerfilCliente from "../PerfilCliente";
-import AgendamentosCliente from "../AgendamentosCliente";
-import HomeCliente from "../HomeCliente";
-
+import AgendamentosCliente from "../Clientes/AgendamentosCliente";
+import HomeCliente from "../Clientes/HomeCliente";
+import PerfilCliente from "../Clientes/PerfilCliente";
 
 const MinhasAbas = createBottomTabNavigator({
   screenOptions: {
@@ -15,17 +14,15 @@ const MinhasAbas = createBottomTabNavigator({
     tabBarInactiveTintColor: "#8E8E93",
   },
 
-tabBarStyle: {
-  
-      paddingBottom: 15,           
-      
-      
-      elevation: 15,                
-      shadowColor: "#000",         
-      shadowOffset: { width: 0, height: -4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
-    },
+  tabBarStyle: {
+    paddingBottom: 15,
+
+    elevation: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
 
   screens: {
     HomeCliente: {
@@ -58,8 +55,6 @@ tabBarStyle: {
       },
     },
   },
-
 });
-
 
 export const NavegacaoPrincipal = createStaticNavigation(MinhasAbas);

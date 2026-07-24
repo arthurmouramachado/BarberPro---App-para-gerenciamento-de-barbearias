@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService'; 
+import { jwtDecode } from 'jwt-decode';
 
 // Estrutura do Usuário Logado
 interface User {
@@ -15,8 +16,15 @@ interface AuthContextData {
   signed: boolean;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, pass: string) => Promise<void>;
+  signIn: (email: string, pass: string) => Promise<User>;
   signOut: () => Promise<void>;
+}
+
+interface TokenPayload {
+  sub: number,
+  nome: string,
+  funcao: string,
+  exp: number,
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -41,22 +49,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
 
   async function signIn(email: string, pass: string) {
-    const data = await authService.login(email, pass);
 
+    const data = await authService.login(email, pass);
+    const token = data.access_token;
+
+    const decodedPayload: TokenPayload = jwtDecode(token);
  
     const loggedUser: User = {
-      id: data.user.id,
-      nome: data.user.nome,
-      email: data.user.email,
-      funcao: data.user.funcao,
-      clienteId: data.user.cliente?.id || data.clienteId, 
+      id: decodedPayload.sub,
+      nome: decodedPayload.nome,
+      email: email,
+      funcao: decodedPayload.funcao,
     };
 
     setUser(loggedUser);
 
 
-    await AsyncStorage.setItem('@BarberPro:token', data.token);
+    await AsyncStorage.setItem('@BarberPro:token', token);
     await AsyncStorage.setItem('@BarberPro:user', JSON.stringify(loggedUser));
+
+    return loggedUser;
   }
 
 
