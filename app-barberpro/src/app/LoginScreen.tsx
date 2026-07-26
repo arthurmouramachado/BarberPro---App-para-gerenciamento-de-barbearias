@@ -34,7 +34,7 @@ export default function LoginScreen() {
       const perfil = loginFeito?.funcao;
 
       if (perfil === "CLIENTE") {
-        router.replace("./Clintes/HomeClinete");
+        router.replace("./Clientes/HomeCliente");
       } else if (perfil === "BARBEIRO" || perfil === "ADMIN") {
         router.replace("./Barbeiro/HomeBarbeiro");
       }

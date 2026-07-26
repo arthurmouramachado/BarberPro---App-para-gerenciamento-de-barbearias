@@ -1,20 +1,48 @@
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router"; // IMPORTADO O USEROUTER
+import { useLocalSearchParams, useRouter } from "expo-router"; // IMPORTADO O USEROUTER
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
+import { userService } from "@/services/userService";
 
 export default function SelectScreen() {
-  const router = useRouter(); // Instanciando o roteador
+  const router = useRouter(); 
   const [perfilSelecionado, setPerfilSelecionado] = useState<"cliente" | "barbeiro" | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleContinuar = () => {
+  const { nome, email, telefone, senha, data_nascimento } = useLocalSearchParams();
+
+  const handleContinuar = async () => {
+    
     if (perfilSelecionado === "cliente") {
-      router.push("/HomeCliente"); 
+      const payload = {
+        nome,
+        email,
+        telefone,
+        senha,
+        data_nascimento,
+        funcao: "CLIENTE", 
+      };
+      
+      try {
+        setIsLoading(true)
+        await userService.criarUser(payload)
+
+        Alert.alert("Sucesso!", "Conta criada com sucesso!");
+        
+        router.replace("./LoginScreen");
+      } catch(error: any) {
+          Alert.alert("Erro no cadastro", error.response?.data?.message || "Ocorreu um erro ao criar a conta.");
+      } finally {
+          setIsLoading(false);
+      }
     } else if (perfilSelecionado === "barbeiro") {
-      router.push("/SelectBarber");
+      router.push({
+        pathname: "/SelectBarber",
+        params: { nome, email, telefone, senha, data_nascimento, funcao: "BARBEIRO" },
+      });
     }
   };
 
@@ -69,12 +97,12 @@ export default function SelectScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Botão agora possui o onPress configurado para avançar */}
+      
       <Button
-        label="Continuar"
+        label={isLoading ? "Cadastrando..." : "Continuar"}
         style={styles.button}
-        isActive={perfilSelecionado !== null} 
-        onPress={handleContinuar} // ADICIONADO
+        isActive={perfilSelecionado !== null && !isLoading} 
+        onPress={handleContinuar} 
         icon={
           <Feather 
             name="arrow-right" 

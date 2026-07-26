@@ -44,7 +44,7 @@ export class UserService {
       if (funcao === 'BARBEIRO' || funcao === 'ADMIN') {
         await this.barbeirosService.create({
           usuario_id: usuario.id,
-          especialidade,
+          especialidade: especialidade || 'Geral',
           bio,
           ativo,
         });

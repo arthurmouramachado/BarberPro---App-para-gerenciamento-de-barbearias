@@ -5,7 +5,7 @@ export interface BarbeariaCardDTO {
   id: number;
   nome: string;               // Nome vindo do banco
   foto_url: string;           // URL da imagem
-  localBarbearia: string;     // Ex: Endereço ou bairro
+  endereco: string;     // Ex: Endereço ou bairro
   diaEHorario: string;        // Ex: "seg-sab das 8h às 18h30"
   mediaAvaliacoes: number;    // A nota média que calculamos no NestJS!
   distanciaKM?: number;       // Opcional, pois dependerá do GPS do usuário futuramente
@@ -14,7 +14,7 @@ export interface BarbeariaCardDTO {
 // Interface opcional para o cadastro
 export interface CriarBarbeariaDTO {
   nome: string;
-  localBarbearia: string;
+  endereco: string;
   diaEHorario: string;
 }
 

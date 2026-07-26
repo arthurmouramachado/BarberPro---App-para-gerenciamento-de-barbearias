@@ -3,7 +3,7 @@ import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useRouter } from "expo-router";
-import React, { useState } from "react"; // IMPORTADO O USESTATE
+import React, { useState } from "react"; 
 import {
   KeyboardAvoidingView,
   Platform,
@@ -20,23 +20,40 @@ import { colors } from "@/colors";
 export default function SingupScreen() {
   const router = useRouter();
 
-  // 1. Estados para monitorar os 4 inputs
+  const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [telefone, setTelefone] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("")
 
-  // 2. Validação: Todos os campos cheios E as duas senhas iguais
   const isFormValid = 
+    nome.trim() !== "" &&
+    dataNascimento.length === 10 &&
     email.trim() !== "" && 
     telefone.trim() !== "" && 
     senha.trim() !== "" && 
     confirmarSenha.trim() !== "" &&
     senha === confirmarSenha;
 
+  const [dia, mes, ano] = dataNascimento.split("/");
+  const data_nascimento = `${ano}-${mes}-${dia}`;
+  
+  const formatarData = (text: string) => {
+  const apenasNumeros = text.replace(/\D/g, "");
+
+  return apenasNumeros
+    .replace(/^(\d{2})(\d)/, "$1/$2")          
+    .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3") 
+    .substring(0, 10);                          
+};
+
   const handleCadastro = () => {
     if (isFormValid) {
-      router.push("/SelectScreen"); 
+      router.push({
+        pathname: "/SelectScreen",
+        params: { nome, email, telefone, senha, data_nascimento },
+      });
     }
   };
 
@@ -56,6 +73,30 @@ export default function SingupScreen() {
 
           <Text style={styles.title}>Cadastro de Usuário</Text>
           <Text style={styles.subtitle}>Preencha seus dados para começar</Text>
+
+            <View style={styles.inputContainer}>
+              <Feather name="user" size={24} color="#64748B" style={styles.icon} />
+              <Input
+                placeholder="Nome Completo"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+                value={nome}
+                onChangeText={setNome}
+              />
+            </View>
+
+              <View style={styles.inputContainer}>
+              <Feather name="calendar" size={24} color="#64748B" style={styles.icon} />
+              <Input
+                placeholder="Data de Nascimento (DD/MM/AAAA)"
+                placeholderTextColor="#9CA3AF"
+                keyboardType="numeric"
+                maxLength={10}
+                style={styles.input}
+                value={dataNascimento}
+                onChangeText={(text) => setDataNascimento(formatarData(text))}
+              />
+            </View>
 
           <View style={styles.inputContainer}>
             <Fontisto name="email" size={24} color="#64748B" style={styles.icon} />
@@ -105,7 +146,6 @@ export default function SingupScreen() {
             />
           </View>
 
-          {/* Botão dinâmico controlado pelo estado do form */}
           <Button
             label="Criar Conta"
             style={styles.button}
@@ -122,6 +162,7 @@ export default function SingupScreen() {
               </TouchableOpacity>
             </Link>
           </View>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
