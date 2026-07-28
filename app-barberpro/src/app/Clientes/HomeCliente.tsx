@@ -8,7 +8,7 @@ import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
@@ -42,18 +42,19 @@ export default function HomeCliente() {
 
   const { user } = useAuth();
   const primeiroNome = user?.nome ? user.nome.split(" ")[0] : "Cliente";
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   const { selecionarBarbearia } = useAgendamento();
 
 
   const handleSelectBarbearia = (item: BarbeariaCardDTO) => {
-    console.log("Clicou na barbearia ID:", item.id); // Log para testar se o clique está disparando
+    console.log("Clicou na barbearia ID:", item.id);
 
     try {
-      // 1. Salva o ID no contexto
+      
       selecionarBarbearia(item.id);
 
-      router.push(`./DetalhesBarbearia?id=${item.id}`);
+      // 3. Navegue usando o navigation.navigate do React Navigation
+      navigation.navigate("DetalhesBarbearia", { id: item.id });
 
     } catch (error) {
       console.error("Erro ao selecionar e navegar:", error);

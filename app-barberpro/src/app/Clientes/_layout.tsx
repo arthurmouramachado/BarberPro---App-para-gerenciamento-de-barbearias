@@ -1,18 +1,17 @@
-import React from 'react'
-import { NavegacaoPrincipal } from '../routes/tab.routes';
-import { NavigationIndependentTree } from '@react-navigation/native';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { AgendamentoProvider } from '@/contexts/AgendamentoContext';
-
+import { AgendamentoProvider } from "@/contexts/AgendamentoContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { NavigationIndependentTree } from "@react-navigation/native";
+import React from "react";
+import { NavegacaoPrincipal } from "../../routes/tab.routes";
 
 export default function _layout() {
   return (
-        <NavigationIndependentTree>
-          <AuthProvider>
-            <AgendamentoProvider>
-              <NavegacaoPrincipal />
-            </AgendamentoProvider>
-          </AuthProvider>
-        </NavigationIndependentTree>
-  )
+    <NavigationIndependentTree>
+      <AuthProvider>
+        <AgendamentoProvider>
+          <NavegacaoPrincipal />
+        </AgendamentoProvider>
+      </AuthProvider>
+    </NavigationIndependentTree>
+  );
 }
