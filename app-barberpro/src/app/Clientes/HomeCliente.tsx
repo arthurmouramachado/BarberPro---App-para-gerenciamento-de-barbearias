@@ -3,11 +3,12 @@ import { Input } from "@/_components/Input";
 import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
+import { Inter_400Regular, Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
+import { useRouter } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
@@ -20,10 +21,12 @@ import {
   BarbeariaCardDTO,
   barbeariaService,
 } from "../../services/barbeariaService";
+import { useAgendamento } from "@/contexts/AgendamentoContext";
 
 export default function HomeCliente() {
   const [fontsLoaded] = useFonts({
     Inter_700Bold,
+    Inter_400Regular,
   });
 
   const [localizacaoTexto, setLocalizacaoTexto] = useState<string>("");
@@ -39,6 +42,24 @@ export default function HomeCliente() {
 
   const { user } = useAuth();
   const primeiroNome = user?.nome ? user.nome.split(" ")[0] : "Cliente";
+  const router = useRouter();
+  const { selecionarBarbearia } = useAgendamento();
+
+
+  const handleSelectBarbearia = (item: BarbeariaCardDTO) => {
+    console.log("Clicou na barbearia ID:", item.id); // Log para testar se o clique está disparando
+
+    try {
+      // 1. Salva o ID no contexto
+      selecionarBarbearia(item.id);
+
+      router.push(`./DetalhesBarbearia?id=${item.id}`);
+
+    } catch (error) {
+      console.error("Erro ao selecionar e navegar:", error);
+    }
+  };
+  
 
   const buscarDadosBarbearia = async () => {
     try {
@@ -161,7 +182,12 @@ export default function HomeCliente() {
           keyExtractor={(item) => String(item.id)}
           refreshing={loading}
           onRefresh={buscarDadosBarbearia}
-          renderItem={({ item }) => <BarbeariaCard barbearia={item} />}
+          renderItem={({ item }) => (
+          <BarbeariaCard 
+            barbearia={item} 
+            onPress={() => handleSelectBarbearia(item)} 
+          />
+        )}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 30,

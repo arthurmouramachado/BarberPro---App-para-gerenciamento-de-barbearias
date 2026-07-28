@@ -1,4 +1,5 @@
 import { api } from './api';
+import { ServicoDTO } from './servicosService';
 
 // 1. O Contrato de Interface (O formato exato do seu Card no App)
 export interface BarbeariaCardDTO {
@@ -18,6 +19,11 @@ export interface CriarBarbeariaDTO {
   diaEHorario: string;
 }
 
+// Interface estendida para a tela de detalhes
+export interface BarbeariaDetalhesDTO extends BarbeariaCardDTO {
+  servicos: ServicoDTO[];
+}
+
 export const barbeariaService = {
   // Tipamos o parâmetro de entrada
   async cadastrar(barbearia: CriarBarbeariaDTO) {
@@ -25,15 +31,14 @@ export const barbeariaService = {
     return response.data;
   },
 
-  // Tipamos que o retorno será uma lista de BarbeariaCardDTO
   async listarTodas(): Promise<BarbeariaCardDTO[]> {
     const response = await api.get<BarbeariaCardDTO[]>("/barbearias");
     return response.data;
   },
 
-  // Tipamos que o retorno será uma única barbearia
-  async buscarPorId(id: string): Promise<BarbeariaCardDTO> {
-    const response = await api.get<BarbeariaCardDTO>(`/barbearias/${id}`);
+  // Retorna a Barbearia COMPLETA com os serviços inclusos
+  async buscarPorId(id: number | string): Promise<BarbeariaDetalhesDTO> {
+    const response = await api.get<BarbeariaDetalhesDTO>(`/barbearias/${id}`);
     return response.data;
-  }
+  },
 };

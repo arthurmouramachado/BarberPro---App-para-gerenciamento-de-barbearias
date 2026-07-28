@@ -1,16 +1,24 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity,TouchableOpacityProps, Image } from 'react-native'
 import { BarbeariaCardDTO } from '../services/barbeariaService'
 import React from 'react'
 
-export function BarbeariaCard({ barbearia }: { barbearia: BarbeariaCardDTO }) {
+interface BarbeariaCardProps extends TouchableOpacityProps{
+    barbearia: BarbeariaCardDTO;
+}
+
+export function BarbeariaCard({ barbearia, style, ...rest }: BarbeariaCardProps) {
   return (
-      <TouchableOpacity style={styles.container}>
+      <TouchableOpacity 
+        style={styles.container}
+        activeOpacity={0.8}
+        {...rest}
+        >
 
             <Image source={{ uri: barbearia.foto_url }} style={styles.image} />
 
             <View style={styles.content}>
                 <Text style={styles.title}>{barbearia.nome}</Text>
-                <Text style={styles.subtitle}>{barbearia.localBarbearia}</Text>
+                <Text style={styles.subtitle}>{barbearia.endereco}</Text>
                 <Text style={styles.subtitle}>{barbearia.diaEHorario}</Text>
             </View>
 

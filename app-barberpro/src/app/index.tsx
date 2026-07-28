@@ -3,7 +3,9 @@ import LoginScreen from './LoginScreen'
 import SplashScreen from './SplashScreen'
 import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/inter';
 import {AuthProvider} from '@/contexts/AuthContext'
+import { setupCalendarLocale } from '@/utils/localeCalendarConfig';
 
+setupCalendarLocale();
 
 let splashJaMostrada = false;
 

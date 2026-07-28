@@ -105,7 +105,7 @@ export default function CreateBarbershop() {
         alert("Barbearia cadastrada com sucesso!");
 
         // Redireciona o usuário após o sucesso
-        router.push("/HomeBarbeiro");
+        router.push("./Barbeiros/HomeBarbeiro");
       } catch (error: any) {
         console.error("Erro na integração com o servidor:", error);
 
