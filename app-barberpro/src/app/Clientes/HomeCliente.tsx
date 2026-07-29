@@ -53,7 +53,7 @@ export default function HomeCliente() {
       
       selecionarBarbearia(item.id);
 
-      // 3. Navegue usando o navigation.navigate do React Navigation
+      
       navigation.navigate("DetalhesBarbearia", { id: item.id });
 
     } catch (error) {

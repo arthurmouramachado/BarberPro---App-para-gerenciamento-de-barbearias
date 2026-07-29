@@ -1,20 +1,17 @@
 // 1. Importações do React e do Navigation
 import Feather from "@expo/vector-icons/Feather";
 import {
-    BottomTabTypeBag,
     createBottomTabNavigator,
 } from "@react-navigation/bottom-tabs";
 import {
     createStaticNavigation,
-    ParamListBase,
-    TypedNavigator,
 } from "@react-navigation/native";
-import { JSX } from "react";
 import AgendamentosCliente from "../app/Clientes/AgendamentosCliente";
 import DetalhesBarbearia from "../app/Clientes/DetalhesBarbearia";
 import HomeCliente from "../app/Clientes/HomeCliente";
 import PerfilCliente from "../app/Clientes/PerfilCliente";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import AgendarServico from "../app/Clientes/AgendarServico";
 
 const MinhasAbas = createBottomTabNavigator({
   screenOptions: {
@@ -76,6 +73,9 @@ const NavegacaoGeral = createNativeStackNavigator({
     },
     DetalhesBarbearia: {
       screen: DetalhesBarbearia, 
+    },
+    AgendarServico: {
+      screen: AgendarServico, 
     },
   },
 });

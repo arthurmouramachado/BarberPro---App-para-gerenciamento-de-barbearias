@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -18,12 +18,12 @@ import {
   BarbeariaDetalhesDTO,
   barbeariaService,
 } from "@/services/barbeariaService";
+import { ServicoDTO } from "@/services/servicosService";
 
 export default function DetalhesBarbearia() {
   console.log("--- CHEGOU NA TELA DETALHES BARBEARIA ---");
   const [barbearia, setBarbearia] = useState<BarbeariaDetalhesDTO | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const {
     barbeariaId: idDoContexto,
@@ -31,11 +31,28 @@ export default function DetalhesBarbearia() {
     selecionarServico,
   } = useAgendamento();
   const params = useLocalSearchParams<{ id?: string }>();
+  const navigation = useNavigation<any>();
 
   const barbeariaId = idDoContexto || (params.id ? Number(params.id) : null);
 
   // Pega a URL do ngrok/backend configurada no Axios
   const BASE_URL = api.defaults.baseURL;
+
+  const handleProsseguir = () => {
+     // Trava de segurança: só avança se realmente houver um serviço selecionado
+    if (!servicoId) {
+    Alert.alert("Atenção", "Por favor, selecione um serviço para continuar.");
+    return;
+    }
+
+    try {
+      
+      navigation.navigate("AgendarServico");
+      
+    } catch (error) {
+      console.error("Erro ao navegar para agendamento:", error);
+    }
+  };
 
   async function carregarDados() {
     if (!barbeariaId) return;
@@ -139,7 +156,7 @@ export default function DetalhesBarbearia() {
           <Button
             label="Prosseguir"
             isActive={!!servicoId}
-            onPress={() => router.push("./AgendamentoServico" as any)}
+            onPress={() => handleProsseguir()}
           />
         </View>
       </View>

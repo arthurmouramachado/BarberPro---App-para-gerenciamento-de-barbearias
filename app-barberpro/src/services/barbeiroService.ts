@@ -1,22 +1,34 @@
 import {api} from './api';
 
+export interface BarbeiroDTO {
+  id: number;
+  usuario_id: number;
+  especialidade?: string;
+  bio?: string;
+  ativo?: boolean;
+  barbearia_id?: number;
+  usuarios: {
+    id: number;
+    nome: string;
+    email: string;
+  };
+}
+
 export const barbeiroService = {
     async criarBarbeiro(barbeiro: any) {
       const response = await api.post("/barbeiros/create", barbeiro);
       return response.data;
     },
 
-    async listarPorBarbearia(barbeariaId: number) {
-        const response = await api.get('/barbeiros', {
-            params: { barbeariaId }
-        });
-        return response.data;
+    async listarPorBarbearia(barbeariaId: number): Promise<BarbeiroDTO[]> {
+        const response = await api.get<BarbeiroDTO[]>('/barbeiros');
+        // Filtra no cliente caso o backend retorne todos
+        return response.data.filter(b => b.barbearia_id === barbeariaId || !b.barbearia_id);
     },
 
-    // Aquela nossa rota inteligente que calcula os slots com base na duração do serviço
-    async obterHorariosDisponiveis(barbeiroId: number, data: string, servicoId: number) {
-        const response = await api.get(`/barbeiros/${barbeiroId}/horarios-disponiveis`, {
-            params: { data, servicoId }
+    async obterHorariosDisponiveis(barbeiroId: number, data: string, servicoId: number): Promise<string[]> {
+        const response = await api.get<string[]>(`/barbeiros/${barbeiroId}/horarios-disponiveis`, {
+        params: { data, servicoId }
         });
         return response.data;
     },
@@ -31,3 +43,7 @@ export const barbeiroService = {
       return response.data;
     }
 };
+
+
+
+
