@@ -7,14 +7,17 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {Calendar} from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
 import { useAgendamento } from '@/contexts/AgendamentoContext';
 import { barbeiroService } from '@/services/barbeiroService';
 
 export default function AgendarServico() {
   const [barbeiros, setBarbeiros] = useState<any[]>([]);
   const [loadingBarbeiros, setLoadingBarbeiros] = useState(false);
-  const { barbeiroId, barbeariaId, selecionarBarbeiro } = useAgendamento();
+
+  // Desestruturando o planoId e servicoId do contexto
+  const { barbeiroId, barbeariaId, selecionarBarbeiro, servicoId, planoId } =
+    useAgendamento();
 
   async function carregarBarbeiro() {
     if (!barbeariaId) return;
@@ -35,7 +38,28 @@ export default function AgendarServico() {
 
   return (
     <View style={styles.container}>
-      {/* Bloco Superior dos Barbeiros (Conforme o Rascunho) */}
+      <View
+        style={[
+          styles.bannerInfoType,
+          planoId ? styles.bannerPlano : styles.bannerServico,
+        ]}
+      >
+        <Text
+          style={[
+            styles.bannerInfoTitle,
+            planoId ? styles.textoPlano : styles.textoServico,
+          ]}
+        >
+          {planoId ? 'Agendamento via Plano / Pacote' : 'Agendamento Avulso'}
+        </Text>
+        <Text style={styles.bannerInfoSub}>
+          {planoId
+            ? 'Você está agendando um plano com pagamento online via app.'
+            : 'Serviço avulso com pagamento presencial na barbearia.'}
+        </Text>
+      </View>
+
+      {/* 2. Bloco dos Barbeiros e Calendário */}
       <View style={styles.headerBarbeiros}>
         <FlatList
           data={barbeiros}
@@ -72,7 +96,7 @@ export default function AgendarServico() {
                   </Text>
                 </View>
 
-                {/* Nome simplificado abaixo do círculo */}
+                {/* Nome simplificado */}
                 <Text
                   style={[
                     styles.nomeBarbeiro,
@@ -86,8 +110,24 @@ export default function AgendarServico() {
             );
           }}
         />
-        <Calendar/>
+
       </View>
+      
+      <View style={styles.calendarContainer}>
+        <Calendar onDayPress={day => {
+          console.log('select day', day);
+        }}
+        style={styles.calendar}
+        headerStyle={{borderBottomWidth: 0.5, borderBottomColor:"#E8e8e8", paddingBottom: 10 }}
+        theme={{
+          textMonthFontSize: 15,
+          textDayFontSize: 10,
+          textMonthFontFamily:"Inter_400Regular",
+          textDayFontFamily: "Inter_400Regular",
+        }}
+        />
+      </View>
+
     </View>
   );
 }
@@ -97,14 +137,49 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F8FAFC',
     paddingTop: 16,
+    marginTop: 30,
+  },
+  /* Estilos do Card Informativo de Plano/Serviço */
+  bannerInfoType: {
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  bannerPlano: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  bannerServico: {
+    backgroundColor: '#EFF6FF',
+    borderColor: '#BFDBFE',
+  },
+  bannerInfoTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  textoPlano: {
+    color: '#065F46',
+  },
+  textoServico: {
+    color: '#1E40AF',
+  },
+  bannerInfoSub: {
+    fontSize: 12,
+    color: '#475569',
+    marginTop: 2,
   },
   headerBarbeiros: {
     backgroundColor: '#FFFFFF',
     paddingVertical: 16,
-    margin: 20,
+    marginHorizontal: 20,
+    marginTop: 10,
     borderBottomWidth: 1,
     borderRadius: 16,
     borderBottomColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   listaContent: {
     flexGrow: 1,
@@ -150,4 +225,16 @@ const styles = StyleSheet.create({
     color: '#155DFC',
     fontWeight: '700',
   },
+  calendarContainer: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 16, 
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  calendar:{
+
+  }
 });

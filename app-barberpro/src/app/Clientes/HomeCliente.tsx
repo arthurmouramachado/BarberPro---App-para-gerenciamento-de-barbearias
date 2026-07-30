@@ -8,7 +8,7 @@ import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import React, { useEffect, useState } from "react";
-import { useNavigation, useRouter } from "expo-router";
+import { useNavigation } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
