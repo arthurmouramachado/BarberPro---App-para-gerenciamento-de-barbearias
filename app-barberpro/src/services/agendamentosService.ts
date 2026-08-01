@@ -14,7 +14,7 @@ export const agendamentosService = {
     const response = await api.post("/agendamentos/marcar", agendamento);
     return response.data;
   },
-  async listarTodas() {
+  async listarTodas(barbeariaId: number | null, barbeiroId: number, dataSelecionada: string | null) {
     const response = await api.get("/agendamentos");
     return response.data;
   },

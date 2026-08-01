@@ -3,9 +3,11 @@ import LoginScreen from './LoginScreen'
 import SplashScreen from './SplashScreen'
 import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/inter';
 import {AuthProvider} from '@/contexts/AuthContext'
-import { setupCalendarLocale } from '@/utils/localeCalendarConfig';
+import { ptBR } from '@/utils/localeCalendarConfig';
+import { LocaleConfig } from 'react-native-calendars';
 
-setupCalendarLocale();
+LocaleConfig.locales["pt-br"] = ptBR;
+LocaleConfig.defaultLocale = "pt-br";
 
 let splashJaMostrada = false;
 
