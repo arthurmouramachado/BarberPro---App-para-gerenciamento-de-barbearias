@@ -1,0 +1,322 @@
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Feather from "@expo/vector-icons/Feather";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from "@expo-google-fonts/inter";
+
+import { UserCard } from "@/_components/UserCard";
+import { colors } from "@/colors";
+import { useAuth } from "@/contexts/AuthContext";
+import { avaliacoesService } from "@/services/avaliacoes";
+
+export default function PerfilBarbeiro() {
+  const [fontsLoaded] = useFonts({
+    Inter_700Bold,
+    Inter_600SemiBold,
+    Inter_400Regular,
+  });
+
+  const { user, signOut } = useAuth();
+
+  const [rating, setRating] = useState<string>("0.0");
+  const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
+  const [carregandoRating, setCarregandoRating] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function carregarRating() {
+      if (!user?.id) {
+        setCarregandoRating(false);
+        return;
+      }
+
+      try {
+        const resultado = await avaliacoesService.obterMediaBarbeiro(user.id);
+        setRating(resultado.media);
+        setTotalAvaliacoes(resultado.total);
+      } catch (error) {
+        console.error("Erro ao carregar rating do barbeiro:", error);
+      } finally {
+        setCarregandoRating(false);
+      }
+    }
+
+    carregarRating();
+  }, [user?.id]);
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  const especialidades = [
+    "Corte Clássico",
+    "Barba",
+    "Degradê",
+    "Pigmentação",
+  ];
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Header com Gradiente */}
+        <LinearGradient
+          colors={[colors.primary, colors.secondary]}
+          style={styles.headerGradient}
+        >
+          <Text style={styles.headerTitle}>Perfil Profissional</Text>
+        </LinearGradient>
+
+        {/* Conteúdo Principal */}
+        <View style={styles.content}>
+          {/* UserCard do Barbeiro */}
+          <View style={styles.userCardWrapper}>
+            <UserCard />
+          </View>
+
+          {/* Card de Rating com dados dinâmicos do backend */}
+          <View style={styles.statsContainer}>
+            <View style={styles.ratingCard}>
+              {carregandoRating ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <>
+                  <View style={styles.ratingValueContainer}>
+                    <Feather name="star" size={20} color="#F59E0B" />
+                    <Text style={styles.ratingValue}>{rating}</Text>
+                  </View>
+                  <Text style={styles.ratingLabel}>
+                    Rating ({totalAvaliacoes})
+                  </Text>
+                </>
+              )}
+            </View>
+          </View>
+
+          {/* Seção de Especialidades */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Especialidades</Text>
+            <View style={styles.chipsContainer}>
+              {especialidades.map((item, index) => (
+                <View key={index} style={styles.chip}>
+                  <Text style={styles.chipText}>{item}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Opções do Menu */}
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="user" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Dados Profissionais</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="clock" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Horários de Trabalho</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="settings" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Configurações</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            {/* Botão de Sair */}
+            <TouchableOpacity
+              style={[styles.menuItem, styles.logoutItem]}
+              activeOpacity={0.7}
+              onPress={signOut}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.logoutIconBadge}>
+                  <Feather name="log-out" size={20} color="#EF4444" />
+                </View>
+                <Text style={styles.logoutText}>Sair</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  headerGradient: {
+    paddingHorizontal: 24,
+    paddingTop: 50,
+    paddingBottom: 40,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+  headerTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 24,
+    color: "#FFFFFF",
+  },
+  content: {
+    paddingHorizontal: 24,
+    marginTop: -20,
+  },
+  userCardWrapper: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+    marginBottom: 16,
+    overflow: "hidden",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginBottom: 20,
+  },
+  ratingCard: {
+    backgroundColor: "#FFFFFF",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    minWidth: 110,
+    minHeight: 65,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  ratingValueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  ratingValue: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 20,
+    color: "#0F172A",
+  },
+  ratingLabel: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 2,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    color: "#0F172A",
+    marginBottom: 12,
+  },
+  chipsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  chip: {
+    backgroundColor: "#DBEAFE",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  chipText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    color: colors.primary,
+  },
+  menuContainer: {
+    gap: 12,
+  },
+  menuItem: {
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  menuItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuItemText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#0F172A",
+  },
+  logoutItem: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FEE2E2",
+    marginTop: 8,
+  },
+  logoutIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FEE2E2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoutText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#EF4444",
+  },
+});

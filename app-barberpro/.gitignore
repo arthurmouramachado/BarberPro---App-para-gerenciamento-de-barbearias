@@ -42,3 +42,6 @@ yarn-error.*
 
 #api_key
 .env
+
+#outro arquivos
+component.config.json
