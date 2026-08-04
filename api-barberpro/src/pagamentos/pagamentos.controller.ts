@@ -22,7 +22,7 @@ export class PagamentosController {
   @Post('pagar')
   create(@Body() createPagamentoDto: CreatePagamentoDto, @Req() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return this.pagamentosService.create(createPagamentoDto, req.userId);
+    return this.pagamentosService.create(createPagamentoDto, req.user);
   }
 
   @Post('webhook')

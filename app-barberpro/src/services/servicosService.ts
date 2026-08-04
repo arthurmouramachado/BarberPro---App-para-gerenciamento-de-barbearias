@@ -5,16 +5,17 @@ export interface ServicoDTO {
   id: number;
   nome: string;
   preco: number;
-  duracaoMinutos?: number;
-  barbeariaId?: number;
+  duracao_minutos?: number;
+  barbearia_id?: number;
 }
 
 // 2. DTO para criação de serviço
 export interface CriarServicoDTO {
   nome: string;
   preco: number;
-  duracaoMinutos: number;
-  barbeariaId: number;
+  duracao_minutos: number;
+  barbearia_id: number;
+  descricao?: string;
 }
 
 export const servicosService = {
@@ -26,7 +27,7 @@ export const servicosService = {
   async listarTodas(barbeariaId: number): Promise<ServicoDTO[]> {
     const response = await api.get<ServicoDTO[]>("/servicos", {
       params: {
-        barbeariaId: barbeariaId,
+        barbearia_id: barbeariaId,
       },
     });
     return response.data;

@@ -13,7 +13,7 @@ export default function SelectScreen() {
 
   const handleContinuar = () => {
     if (perfilSelecionado === "funcionario") {
-      //router.push("/Homebarber"); 
+      //router.push("/BuscarBarearia"); 
     } else if (perfilSelecionado === "dono") {
       router.push("/CreateBarbershop");
     }
@@ -26,7 +26,7 @@ export default function SelectScreen() {
       <Text style={styles.subtitle}>Escolha a opção que melhor descreve você</Text>
 
       <View style={styles.optionsContainer}>
-        {/* CARD CLIENTE */}
+        {/* CARD Funcionario */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => setPerfilSelecionado("funcionario")}
@@ -46,7 +46,7 @@ export default function SelectScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* CARD BARBEIRO */}
+        {/* CARD Dono */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => setPerfilSelecionado("dono")}

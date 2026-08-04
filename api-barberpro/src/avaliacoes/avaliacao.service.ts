@@ -20,6 +20,23 @@ export class AvaliacoesService {
     });
   }
 
+  async obterMediaPorBarbeiro(barbeiroId: number) {
+    const resultado = await this.prisma.avaliacao.aggregate({
+      _avg: { nota: true },
+      _count: { id: true },
+      where: {
+        agendamentos: {
+          barbeiro_id: barbeiroId,
+        },
+      },
+    });
+
+    return {
+      media: (resultado._avg.nota || 0).toFixed(1),
+      total: resultado._count.id,
+    };
+  }
+
   findAll() {
     return this.prisma.avaliacao.findMany({
       include: {

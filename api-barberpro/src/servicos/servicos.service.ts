@@ -17,8 +17,7 @@ export class ServicosService {
 
     // Se vier barbearia_id, valida se ela existe
     if (barbearia_id) {
-      const barbearia = this.barbeariasService.findOne(barbearia_id);
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      const barbearia = await this.barbeariasService.findOne(barbearia_id);
       if (!barbearia) throw new NotFoundException('Barbearia não encontrada');
     }
 
@@ -63,10 +62,9 @@ export class ServicosService {
 
     // Se vier barbearia_id no update, valida
     if (updateServicoDto.barbearia_id) {
-      const barbearia = this.barbeariasService.findOne(
+      const barbearia = await this.barbeariasService.findOne(
         updateServicoDto.barbearia_id,
       );
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       if (!barbearia) throw new NotFoundException('Barbearia não encontrada');
     }
 
