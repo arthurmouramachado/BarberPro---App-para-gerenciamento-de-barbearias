@@ -20,6 +20,7 @@ import { UserCard } from "@/_components/UserCard";
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { avaliacoesService } from "@/services/avaliacoes";
+import { StaggeredText } from "@/_components/ui/AnimatedText";
 
 export default function PerfilBarbeiro() {
   const [fontsLoaded] = useFonts({
@@ -59,12 +60,6 @@ export default function PerfilBarbeiro() {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
-  const especialidades = [
-    "Corte Clássico",
-    "Barba",
-    "Degradê",
-    "Pigmentação",
-  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -77,7 +72,7 @@ export default function PerfilBarbeiro() {
           colors={[colors.primary, colors.secondary]}
           style={styles.headerGradient}
         >
-          <Text style={styles.headerTitle}>Perfil Profissional</Text>
+          <StaggeredText text="Perfil Profissional"style={styles.headerTitle}/>
         </LinearGradient>
 
         {/* Conteúdo Principal */}
@@ -103,18 +98,6 @@ export default function PerfilBarbeiro() {
                   </Text>
                 </>
               )}
-            </View>
-          </View>
-
-          {/* Seção de Especialidades */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Especialidades</Text>
-            <View style={styles.chipsContainer}>
-              {especialidades.map((item, index) => (
-                <View key={index} style={styles.chip}>
-                  <Text style={styles.chipText}>{item}</Text>
-                </View>
-              ))}
             </View>
           </View>
 
@@ -209,7 +192,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
+    justifyContent: "center",
     marginBottom: 20,
   },
   ratingCard: {

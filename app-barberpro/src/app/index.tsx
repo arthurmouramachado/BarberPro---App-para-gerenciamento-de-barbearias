@@ -5,6 +5,7 @@ import { useFonts, Inter_700Bold, Inter_400Regular  } from '@expo-google-fonts/i
 import {AuthProvider} from '@/contexts/AuthContext'
 import { ptBR } from '@/utils/localeCalendarConfig';
 import { LocaleConfig } from 'react-native-calendars';
+import _layout from './Barbeiro/_layout';
 
 LocaleConfig.locales["pt-br"] = ptBR;
 LocaleConfig.defaultLocale = "pt-br";
@@ -28,7 +29,7 @@ useEffect(() => {
     splashJaMostrada = true; //  Salva na memória externa que a Splash já rodou!
   }, 1500);
 
-  return () => clearTimeout(timer); // Boa prática para limpar o timer se o app fechar
+  return () => clearTimeout(timer); 
 }, []);
 
   if (!fontsLoaded) {
@@ -38,8 +39,6 @@ useEffect(() => {
   if(showSplash) return <SplashScreen />
 
   return (
-    <AuthProvider>
-      <LoginScreen/>
-    </AuthProvider>
+    <_layout/>
   );
 } 

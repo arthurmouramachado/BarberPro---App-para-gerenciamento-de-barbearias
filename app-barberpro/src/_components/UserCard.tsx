@@ -58,7 +58,7 @@ export function UserCard() {
     carregarPerfil();
   }, [user?.id]);
   
-  const nomeUsuario = userData?.nome || user?.nome || "Cliente";
+  const nomeUsuario = userData?.nome || user?.nome || "Barbeiro";
   const iniciais = gerarIniciais(nomeUsuario);
 
   return (

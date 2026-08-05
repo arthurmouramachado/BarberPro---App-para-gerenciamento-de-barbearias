@@ -16,6 +16,7 @@ import {
 } from "@expo-google-fonts/inter";
 
 import { colors } from "@/colors";
+import { StaggeredText } from "@/_components/ui/AnimatedText";
 
 interface Agendamento {
   id: string;
@@ -73,8 +74,8 @@ export default function AgendaBarbeiro() {
         colors={[colors.primary, colors.secondary]}
         style={styles.headerGradient}
       >
-        <Text style={styles.headerTitle}>Agenda do Barbeiro</Text>
-        <Text style={styles.headerSubtitle}>Gerencie seus horários e atendimentos</Text>
+        <StaggeredText text="Agenda do Barbeiro" style={styles.headerTitle} />
+        <StaggeredText text="Gerencie seus horários e atendimentos" style={styles.headerSubtitle} />
 
         {/* Filtro rápido de data */}
         <View style={styles.filterContainer}>

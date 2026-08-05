@@ -41,7 +41,7 @@ export default function HomeBarbeiro() {
         <LinearGradient
           colors={[colors.primary, colors.secondary]}
           style={styles.headerGradient}
-        >
+        > 
           <View style={styles.headerContent}>
             <View>
               <StaggeredText text="Olá," style={styles.text1} />
@@ -56,9 +56,8 @@ export default function HomeBarbeiro() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.subtitleText}>
-            Resumo do seu dia na barbearia
-          </Text>
+          <StaggeredText text="Resumo do seu dia na barbearia"style={styles.subtitleText}/>
+            
         </LinearGradient>
 
         {/* Conteúdo Principal */}

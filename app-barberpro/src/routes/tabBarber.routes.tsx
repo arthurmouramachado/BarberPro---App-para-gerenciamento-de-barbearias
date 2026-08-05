@@ -8,6 +8,8 @@ import {
 } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeBarbeiro from "../app/Barbeiro/HomeBarbeiro";
+import PerfilBarbeiro from "@/app/Barbeiro/PerfilBarbeiro";
+import AgendaBarbeiro from "@/app/Barbeiro/AgendaBarbeiro";
 // Crie esses arquivos futuramente se precisar, ou substitua temporariamente
 // import AgendaBarbeiro from "../app/Barbeiro/AgendaBarbeiro"; 
 // import PerfilBarbeiro from "../app/Barbeiro/PerfilBarbeiro";
@@ -42,7 +44,7 @@ const AbasBarbeiro = createBottomTabNavigator({
 
     // Você pode adicionar mais abas aqui conforme o app crescer (ex: Agenda, Servicos, Perfil)
     AgendaBarbeiro: {
-      screen: HomeBarbeiro, // Substitua pela tela de agenda futuramente
+      screen: AgendaBarbeiro, // Substitua pela tela de agenda futuramente
       options: {
         tabBarLabel: "Agenda",
         tabBarIcon: ({ color, size }) => (
@@ -52,7 +54,7 @@ const AbasBarbeiro = createBottomTabNavigator({
     },
 
     PerfilBarbeiro: {
-      screen: HomeBarbeiro, // Substitua pela tela de perfil futuramente
+      screen: PerfilBarbeiro, // Substitua pela tela de perfil futuramente
       options: {
         tabBarLabel: "Perfil",
         tabBarIcon: ({ color, size }) => (
