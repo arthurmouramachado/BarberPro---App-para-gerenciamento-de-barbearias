@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { AgendamentosService } from './agendamentos.service';
 import { CreateAgendamentoDto } from './dto/create-agendamento.dto';
@@ -33,6 +34,14 @@ export class AgendamentosController {
   @Get('cliente/:clienteId')
   findByCliente(@Param('clienteId') clienteId: string) {
     return this.agendamentosService.findByCliente(+clienteId);
+  }
+
+  @Get('barbeiro/:barbeiroId')
+  findByBarbeiro(
+    @Param('barbeiroId') barbeiroId: string,
+    @Query('data') data?: string,
+  ) {
+    return this.agendamentosService.findByBarbeiro(+barbeiroId, data);
   }
 
   @Patch(':id')

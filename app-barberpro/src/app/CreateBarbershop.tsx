@@ -10,6 +10,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -26,8 +28,9 @@ export default function CreateBarbershop() {
   const router = useRouter();
 
   const [image, setImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // 1. Estados corretos para cada input do formulário
+  // Estados dos inputs do formulário
   const [nomeBarbearia, setNomeBarbearia] = useState("");
   const [telefone, setTelefone] = useState("");
   const [cep, setCep] = useState("");
@@ -37,9 +40,8 @@ export default function CreateBarbershop() {
   const [estado, setEstado] = useState("");
 
   const handleBuscarCep = (texto: string) => {
-    const cepLimpo = texto.replace(/\D/g, ""); // Remove qualquer caractere que não seja número
-
-    setCep(cepLimpo); // Atualiza o estado do CEP com o valor limpo
+    const cepLimpo = texto.replace(/\D/g, "");
+    setCep(cepLimpo);
 
     if (cepLimpo.length === 8) {
       fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`)
@@ -50,71 +52,67 @@ export default function CreateBarbershop() {
             setCidade(data.localidade);
             setEstado(data.uf);
           } else {
-            alert("CEP não encontrado!");
+            Alert.alert("Erro", "CEP não encontrado!");
           }
         })
         .catch((error) => {
           console.error("Erro ao buscar CEP:", error);
-          alert("Erro ao buscar CEP. Tente novamente.");
+          Alert.alert("Erro", "Erro ao buscar CEP. Tente novamente.");
         });
-    } else if (cepLimpo.length === 8) {
+    } else {
+      // Limpa os campos quando o CEP for alterado/apagado
       setEndereco("");
       setCidade("");
       setEstado("");
     }
   };
 
-  // 2. Validação: O botão só ativa se todos os campos obrigatórios estiverem preenchidos
   const isFormValid =
     nomeBarbearia.trim() !== "" &&
     telefone.trim() !== "" &&
-    cep.trim().length === 8 && // Garante que o CEP tem 8 dígitos
+    cep.trim().length === 8 &&
     endereco.trim() !== "" &&
     numero.trim() !== "" &&
     cidade.trim() !== "" &&
     estado.trim() !== "";
 
   const handleCadastro = async () => {
-    if (isFormValid) {
-      try {
-        
-        const formData = new FormData();
+    if (!isFormValid || loading) return;
 
-      
-        formData.append("nome", nomeBarbearia);
-        formData.append("telefone", telefone);
+    try {
+      setLoading(true);
 
-        
-        const enderecoCompleto = `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
-        formData.append("endereco", enderecoCompleto);
+      const formData = new FormData();
+      formData.append("nome", nomeBarbearia);
+      formData.append("telefone", telefone);
 
-        if (image) {
-          const uriParts = image.split(".");
-          const fileType = uriParts[uriParts.length - 1];
+      const enderecoCompleto = `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
+      formData.append("endereco", enderecoCompleto);
 
-          formData.append("foto", {
-            uri: image,
-            name: `barbearia_${Date.now()}.${fileType}`,
-            type: `image/${fileType}`,
-          } as any);
-        }
+      if (image) {
+        const uriParts = image.split(".");
+        const fileType = uriParts[uriParts.length - 1];
 
-        const resultado = await barbeariaService.cadastrar(formData as any);
-
-        console.log("Barbearia cadastrada com sucesso via Axios:", resultado);
-        alert("Barbearia cadastrada com sucesso!");
-
-        // Redireciona o usuário após o sucesso
-        router.push("./Barbeiros/HomeBarbeiro");
-      } catch (error: any) {
-        console.error("Erro na integração com o servidor:", error);
-
-        // Tratamento de erro amigável se a API retornar alguma mensagem do NestJS (ex: validações)
-        const mensagemErro =
-          error.response?.data?.message ||
-          "Não foi possível conectar ao servidor. Verifique se o seu NestJS está rodando.";
-        alert(`Erro: ${mensagemErro}`);
+        formData.append("foto", {
+          uri: image,
+          name: `barbearia_${Date.now()}.${fileType}`,
+          type: `image/${fileType}`,
+        } as any);
       }
+
+      await barbeariaService.cadastrar(formData as any);
+
+      Alert.alert("Sucesso", "Barbearia cadastrada com sucesso!", [
+        { text: "OK", onPress: () => router.replace("./HomeBarbeiro") },
+      ]);
+    } catch (error: any) {
+      console.error("Erro no cadastro:", error);
+      const mensagemErro =
+        error.response?.data?.message ||
+        "Não foi possível conectar ao servidor.";
+      Alert.alert("Erro", mensagemErro);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -122,7 +120,7 @@ export default function CreateBarbershop() {
     const permissonResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (permissonResult.granted === false) {
-      alert("Permissão para acessar a galeria é necessária!");
+      Alert.alert("Permissão necessária", "Permissão para acessar a galeria é necessária!");
       return;
     }
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -148,7 +146,7 @@ export default function CreateBarbershop() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          <LinearGradient colors={["#155DFC", "#3B82F6"]} style={styles.view}>
+          <LinearGradient colors={[colors.primary, colors.secondary]} style={styles.view}>
             <FontAwesome6 name="building" size={40} color="#FFFFFF" />
           </LinearGradient>
 
@@ -209,7 +207,7 @@ export default function CreateBarbershop() {
             />
           </View>
 
-          {/* CEP (Obrigatório para o autocomplete funcionar) */}
+          {/* CEP */}
           <View style={styles.inputContainer}>
             <SimpleLineIcons
               name="envelope"
@@ -228,7 +226,7 @@ export default function CreateBarbershop() {
             />
           </View>
 
-          {/* Endereço Completo */}
+          {/* Endereço */}
           <View style={styles.inputContainer}>
             <SimpleLineIcons
               name="location-pin"
@@ -245,7 +243,7 @@ export default function CreateBarbershop() {
             />
           </View>
 
-          {/* Número / Local */}
+          {/* Número / Complemento */}
           <View style={styles.inputContainer}>
             <FontAwesome5
               name="home"
@@ -262,9 +260,8 @@ export default function CreateBarbershop() {
             />
           </View>
 
-          {/* CONTAINER LADO A LADO: CIDADE E ESTADO */}
+          {/* Cidade e Estado */}
           <View style={styles.rowContainer}>
-            {/* Cidade */}
             <View style={[styles.inputContainer, styles.halfInput]}>
               <SimpleLineIcons
                 name="location-pin"
@@ -281,7 +278,6 @@ export default function CreateBarbershop() {
               />
             </View>
 
-            {/* Estado */}
             <View style={[styles.inputContainer, styles.halfInput]}>
               <SimpleLineIcons
                 name="location-pin"
@@ -290,7 +286,7 @@ export default function CreateBarbershop() {
                 style={styles.icon}
               />
               <Input
-                placeholder="ESTADO"
+                placeholder="Estado"
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="characters"
                 maxLength={2}
@@ -302,16 +298,20 @@ export default function CreateBarbershop() {
           </View>
 
           <Button
-            label="Criar Conta"
+            label={loading ? "Cadastrando..." : "Criar Barbearia"}
             style={styles.button}
-            isActive={isFormValid}
+            isActive={isFormValid && !loading}
             onPress={handleCadastro}
             icon={
-              <FontAwesome5
-                name="check-circle"
-                size={24}
-                color={isFormValid ? "#FFFFFF" : "#94A3B8"}
-              />
+              loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <FontAwesome5
+                  name="check-circle"
+                  size={24}
+                  color={isFormValid ? "#FFFFFF" : "#94A3B8"}
+                />
+              )
             }
           />
         </ScrollView>
@@ -397,8 +397,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
   },
   uploadText: {
-    justifyContent: "center",
-    alignItems: "center",
     fontFamily: "Inter_400Regular",
     color: "#64748B",
     fontSize: 16,
@@ -410,14 +408,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 5,
   },
-
-  // ESTILOS NOVOS PARA O LADO A LADO
   rowContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    width: 300, // Alinhado com a largura total dos outros inputs
+    width: 300,
   },
   halfInput: {
-    width: 144, // Metade do espaço considerando um pequeno respiro entre eles
+    width: 144,
   },
 });

@@ -1,19 +1,19 @@
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router"; // IMPORTADO O USEROUTER
+import { useRouter } from "expo-router"; 
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { colors } from "@/colors";
 
 export default function SelectScreen() {
-  const router = useRouter(); // Instanciando o roteador
+  const router = useRouter(); 
   const [perfilSelecionado, setPerfilSelecionado] = useState<"funcionario" | "dono" | null>(null);
 
   const handleContinuar = () => {
     if (perfilSelecionado === "funcionario") {
-      //router.push("/BuscarBarearia"); 
+      router.push("./BuscarBarbearia"); 
     } else if (perfilSelecionado === "dono") {
       router.push("/CreateBarbershop");
     }

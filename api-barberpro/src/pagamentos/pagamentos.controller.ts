@@ -60,6 +60,12 @@ export class PagamentosController {
     return this.pagamentosService.checkAbacateStatus(+id);
   }
 
+  @UseGuards(AuthGuard)
+  @Get('relatorio/barbeiro/:id')
+  getRelatorioFinanceiro(@Param('id') barbeiroId: string) {
+    return this.pagamentosService.getRelatorioFinanceiro(+barbeiroId);
+  }
+
   @Get()
   findAll() {
     return this.pagamentosService.findAll();

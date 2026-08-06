@@ -90,6 +90,10 @@ export class UserService {
   async findByEmail(email: string) {
     return this.prisma.usuarios.findUnique({
       where: { email },
+      include: {
+        barbeiros: true,
+        clientes: true,
+      },
     });
   }
 

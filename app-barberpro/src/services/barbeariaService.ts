@@ -8,7 +8,7 @@ export interface BarbeariaCardDTO {
   foto_url: string;           // URL da imagem
   endereco: string;     // Ex: Endereço ou bairro
   diaEHorario: string;        // Ex: "seg-sab das 8h às 18h30"
-  mediaAvaliacoes: number;    // A nota média que calculamos no NestJS!
+  mediaAvaliacoes: number;    // A nota média de avaliações
   distanciaKM?: number;       // Opcional, pois dependerá do GPS do usuário futuramente
 }
 
@@ -25,9 +25,13 @@ export interface BarbeariaDetalhesDTO extends BarbeariaCardDTO {
 }
 
 export const barbeariaService = {
-  // Tipamos o parâmetro de entrada
-  async cadastrar(barbearia: CriarBarbeariaDTO) {
-    const response = await api.post("/barbearias/criar", barbearia);
+ async cadastrar(dados: FormData | CriarBarbeariaDTO) {
+    const isFormData = dados instanceof FormData;
+    const response = await api.post("/barbearias", dados, {
+      headers: isFormData
+        ? { "Content-Type": "multipart/form-data" }
+        : { "Content-Type": "application/json" },
+    });
     return response.data;
   },
 

@@ -8,6 +8,27 @@ export interface CriarPagamentoInput {
   cpf: string;
 }
 
+export interface TransacaoRecente {
+  id: number;
+  agendamentoId: number;
+  clienteNome: string;
+  servicoNome: string;
+  valor: number;
+  data: string;
+  metodo: string;
+  status: string;
+}
+
+export interface RelatorioFinanceiroDTO {
+  faturamentoHoje: number;
+  faturamentoMes: number;
+  faturamentoAno: number;
+  faturamentoTotal: number;
+  totalAtendimentos: number;
+  ticketMedio: number;
+  transacoesRecentes: TransacaoRecente[];
+}
+
 export const pagamentoService = {
   //  FLUXO DE PAGAMENTO DO CLIENTE
 
@@ -56,6 +77,11 @@ export const pagamentoService = {
   // Atualiza um registro de pagamento localmente (ex: mudar o status manualmente)
   async atualizar(id: number, pagamentoData: any) {
     const response = await api.patch(`/pagamentos/${id}`, pagamentoData);
+    return response.data;
+  },
+
+  async obterRelatorioFinanceiro(barbeiroId: number): Promise<RelatorioFinanceiroDTO> {
+    const response = await api.get<RelatorioFinanceiroDTO>(`/pagamentos/relatorio/barbeiro/${barbeiroId}`);
     return response.data;
   },
 

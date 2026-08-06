@@ -161,6 +161,37 @@ export class AgendamentosService {
     });
   }
 
+  async findByBarbeiro(barbeiro_id: number, data?: string) {
+    const whereCondition: any = {
+      barbeiro_id: Number(barbeiro_id),
+    };
+
+    if (data) {
+      const inicioDia = new Date(`${data}T00:00:00.000Z`);
+      const fimDia = new Date(`${data}T23:59:59.999Z`);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      whereCondition.data = {
+        gte: inicioDia,
+        lte: fimDia,
+      };
+    }
+
+    return this.prisma.agendamentos.findMany({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      where: whereCondition,
+      include: {
+        clientes: {
+          include: {
+            usuarios: true,
+          },
+        },
+        servicos: true,
+      },
+      orderBy: { hora_inicio: 'asc' },
+    });
+  }
+
   async update(id: number, updateAgendamentoDto: UpdateAgendamentoDto) {
     await this.findOne(id); // Verifica se o agendamento existe antes de atualizar
 

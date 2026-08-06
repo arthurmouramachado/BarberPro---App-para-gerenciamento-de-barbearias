@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   Injectable,
@@ -115,7 +116,6 @@ export class PagamentosService {
           JSON.stringify(result),
         );
         throw new HttpException(
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           result.error || 'Falha ao processar pagamento na API do AbacatePay.',
           HttpStatus.BAD_REQUEST,
         );
@@ -129,16 +129,15 @@ export class PagamentosService {
           metodo: createPagamentoDto.metodo,
           valor: createPagamentoDto.valor,
           status: createPagamentoDto.status || 'Pendente',
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           id_transacao: String(result.data.id),
         },
       });
 
       return {
         pagamentoId: novoPagamento.id,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         brCode: result.data.brCode,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         brCodeBase64: result.data.brCodeBase64,
         status: novoPagamento.status,
       };
@@ -185,8 +184,9 @@ export class PagamentosService {
     signature?: string,
     webhookSecretQuery?: string,
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (payload.event !== 'transparent.completed') {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const event = payload?.event;
+    if (event !== 'transparent.completed' && event !== 'billing.paid') {
       return { message: 'Evento ignorado' };
     }
 
@@ -216,23 +216,54 @@ export class PagamentosService {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const dataObjeto = payload.data || payload;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (!dataObjeto.id) return { message: 'Ignorado' };
+    const idTransacao = dataObjeto?.id ? String(dataObjeto.id) : null;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const agendamentoIdMeta =
+      dataObjeto?.metadata?.agendamento_id ||
+      dataObjeto?.metadata?.agendamentoId;
 
-    const pagamentoLocal = await this.prisma.pagamentos.findFirst({
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      where: { id_transacao: String(dataObjeto.id) },
-    });
+    let pagamentoLocal: any = null;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    if (pagamentoLocal && dataObjeto.status === 'PAID') {
-      await this.prisma.pagamentos.update({
-        where: { id: pagamentoLocal.id },
-        data: { status: 'Confirmado' },
+    if (idTransacao) {
+      pagamentoLocal = await this.prisma.pagamentos.findFirst({
+        where: { id_transacao: idTransacao },
       });
     }
+
+    if (!pagamentoLocal && agendamentoIdMeta) {
+      pagamentoLocal = await this.prisma.pagamentos.findFirst({
+        where: { agendamento_id: Number(agendamentoIdMeta) },
+      });
+    }
+
+    if (pagamentoLocal) {
+      await this.prisma.pagamentos.update({
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        where: { id: pagamentoLocal.id },
+        data: {
+          status: 'Confirmado',
+          pago_em: new Date(),
+        },
+      });
+
+      if (pagamentoLocal.agendamento_id) {
+        try {
+          await this.prisma.agendamentos.update({
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            where: { id: pagamentoLocal.agendamento_id },
+            data: { status: 'CONFIRMADO' },
+          });
+        } catch (e) {
+          this.logger.warn(
+            `Erro ao atualizar status do agendamento ${pagamentoLocal.agendamento_id}:`,
+            e,
+          );
+        }
+      }
+    }
+
     return { success: true };
   }
 
@@ -247,12 +278,11 @@ export class PagamentosService {
     const result = await response.json();
     if (!response.ok) {
       throw new HttpException(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         result.error || 'Erro ao listar cobrancas na AbacatePay',
         HttpStatus.BAD_REQUEST,
       );
     }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return result.data;
   }
 
@@ -272,26 +302,41 @@ export class PagamentosService {
     const result = await response.json();
     if (!response.ok) {
       throw new HttpException(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         result.error || 'Erro ao consultar status na AbacatePay',
         HttpStatus.BAD_REQUEST,
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (result.data?.status === 'PAID' && pagamento.status !== 'Confirmado') {
       await this.prisma.pagamentos.update({
         where: { id: pagamentoId },
-        data: { status: 'Confirmado' },
+        data: {
+          status: 'Confirmado',
+          pago_em: new Date(),
+        },
       });
+
+      if (pagamento.agendamento_id) {
+        try {
+          await this.prisma.agendamentos.update({
+            where: { id: pagamento.agendamento_id },
+            data: { status: 'CONFIRMADO' },
+          });
+        } catch (e) {
+          this.logger.warn(
+            `Erro ao atualizar agendamento ${pagamento.agendamento_id}:`,
+            e,
+          );
+        }
+      }
     }
 
     return {
       localId: pagamento.id,
       localStatus: pagamento.status,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       abacateStatus: result.data?.status,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       abacateExpiresAt: result.data?.expiresAt,
     };
   }
@@ -313,11 +358,150 @@ export class PagamentosService {
     const result = await response.json();
     if (!response.ok) {
       throw new HttpException(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         result.error || 'Erro ao simular pagamento na AbacatePay',
         HttpStatus.BAD_REQUEST,
       );
     }
+
+    // Atualiza localmente para testes e para alimentar o relatório financeiro
+    await this.prisma.pagamentos.update({
+      where: { id: pagamentoId },
+      data: {
+        status: 'Confirmado',
+        pago_em: new Date(),
+      },
+    });
+
+    if (pagamento.agendamento_id) {
+      try {
+        await this.prisma.agendamentos.update({
+          where: { id: pagamento.agendamento_id },
+          data: { status: 'CONFIRMADO' },
+        });
+      } catch (e) {
+        this.logger.warn(
+          `Erro ao atualizar agendamento ${pagamento.agendamento_id}:`,
+          e,
+        );
+      }
+    }
+
     return { success: true, message: 'Pagamento simulado com sucesso' };
+  }
+
+  async getRelatorioFinanceiro(barbeiroId: number) {
+    const agora = new Date();
+
+    const inicioHoje = new Date(
+      agora.getFullYear(),
+      agora.getMonth(),
+      agora.getDate(),
+    );
+    const fimHoje = new Date(
+      agora.getFullYear(),
+      agora.getMonth(),
+      agora.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
+
+    const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    const fimMes = new Date(
+      agora.getFullYear(),
+      agora.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+
+    const inicioAno = new Date(agora.getFullYear(), 0, 1);
+    const fimAno = new Date(agora.getFullYear(), 11, 31, 23, 59, 59, 999);
+
+    // Busca os pagamentos confirmados do barbeiro
+    const pagamentos = await this.prisma.pagamentos.findMany({
+      where: {
+        status: 'Confirmado',
+        agendamentos: {
+          barbeiro_id: barbeiroId,
+        },
+      },
+      include: {
+        agendamentos: {
+          include: {
+            servicos: true,
+            clientes: {
+              include: {
+                usuarios: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { pago_em: 'desc' },
+    });
+
+    let faturamentoHoje = 0;
+    let faturamentoMes = 0;
+    let faturamentoAno = 0;
+    let faturamentoTotal = 0;
+
+    const transacoesRecentes: Array<{
+      id: number;
+      agendamentoId: number;
+      clienteNome: string;
+      servicoNome: string;
+      valor: number;
+      data: Date;
+      metodo: string;
+      status: string | null;
+    }> = [];
+
+    for (const pag of pagamentos) {
+      const valor = Number(pag.valor);
+      const dataPagamento = pag.pago_em ? new Date(pag.pago_em) : new Date();
+
+      faturamentoTotal += valor;
+
+      if (dataPagamento >= inicioHoje && dataPagamento <= fimHoje) {
+        faturamentoHoje += valor;
+      }
+      if (dataPagamento >= inicioMes && dataPagamento <= fimMes) {
+        faturamentoMes += valor;
+      }
+      if (dataPagamento >= inicioAno && dataPagamento <= fimAno) {
+        faturamentoAno += valor;
+      }
+
+      if (transacoesRecentes.length < 15) {
+        transacoesRecentes.push({
+          id: pag.id,
+          agendamentoId: pag.agendamento_id,
+          clienteNome: pag.agendamentos.clientes?.usuarios?.nome || 'Cliente',
+          servicoNome: pag.agendamentos.servicos?.nome || 'Serviço',
+          valor,
+          data: pag.pago_em || pag.agendamentos.data,
+          metodo: pag.metodo,
+          status: pag.status,
+        });
+      }
+    }
+
+    const totalAtendimentos = pagamentos.length;
+    const ticketMedio =
+      totalAtendimentos > 0 ? faturamentoTotal / totalAtendimentos : 0;
+
+    return {
+      faturamentoHoje,
+      faturamentoMes,
+      faturamentoAno,
+      faturamentoTotal,
+      totalAtendimentos,
+      ticketMedio,
+      transacoesRecentes,
+    };
   }
 }

@@ -1,4 +1,30 @@
-import {api} from './api';
+import { api } from './api';
+
+export interface AgendamentoDTO {
+  id: number;
+  cliente_id: number;
+  barbeiro_id: number;
+  servico_id: number;
+  data: string;
+  hora_inicio: string;
+  hora_fim: string;
+  status: 'PENDENTE' | 'CONFIRMADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'CANCELADO';
+  clientes?: {
+    id: number;
+    usuarios: {
+      nome: string;
+      telefone?: string;
+      foto_url?: string;
+    };
+  };
+  servicos?: {
+    id: number;
+    nome: string;
+    preco: number | string;
+    duracao: number;
+  };
+}
+
 export interface CriarAgendamentoDTO {
   cliente_id: number;
   barbeiro_id: number;
@@ -11,21 +37,27 @@ export interface CriarAgendamentoDTO {
 
 export const agendamentosService = {
   async marcar(agendamento: CriarAgendamentoDTO) {
-    const response = await api.post("/agendamentos/marcar", agendamento);
+    const response = await api.post('/agendamentos/marcar', agendamento);
     return response.data;
   },
-  async listarTodas(barbeariaId: number | null, barbeiroId: number, dataSelecionada: string | null) {
-    const response = await api.get("/agendamentos");
+
+  async buscarPorBarbeiro(barbeiroId: number, data?: string): Promise<AgendamentoDTO[]> {
+    const response = await api.get<AgendamentoDTO[]>(`/agendamentos/barbeiro/${barbeiroId}`, {
+      params: { data },
+    });
     return response.data;
   },
-  async buscarPorId(id: number | string) {
-    const response = await api.get(`/agendamentos/${id}`);
+
+  async atualizarStatus(id: number, status: string) {
+    const response = await api.patch(`/agendamentos/${id}`, { status });
     return response.data;
   },
+
   async buscarPorCliente(cliente_id: number) {
     const response = await api.get(`/agendamentos/cliente/${cliente_id}`);
     return response.data;
   },
+
   async cancelar(id: number | string) {
     const response = await api.delete(`/agendamentos/${id}`);
     return response.data;

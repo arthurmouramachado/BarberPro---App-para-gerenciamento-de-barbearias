@@ -10,6 +10,7 @@ interface User {
   email: string;
   funcao: string;
   clienteId?: number; 
+  barbeiroId?: number;
 }
 
 interface AuthContextData {
@@ -25,6 +26,8 @@ interface TokenPayload {
   nome: string,
   funcao: string,
   exp: number,
+  clienteId?: number;
+  barbeiroId?: number;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -60,6 +63,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       nome: decodedPayload.nome,
       email: email,
       funcao: decodedPayload.funcao,
+      clienteId: decodedPayload.clienteId,
+      barbeiroId: decodedPayload.barbeiroId,
     };
 
     setUser(loggedUser);

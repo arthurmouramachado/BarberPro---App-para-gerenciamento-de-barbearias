@@ -15,6 +15,7 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import { useRouter } from "expo-router";
 
 import { UserCard } from "@/_components/UserCard";
 import { colors } from "@/colors";
@@ -30,6 +31,7 @@ export default function PerfilBarbeiro() {
   });
 
   const { user, signOut } = useAuth();
+  const router = useRouter();
 
   const [rating, setRating] = useState<string>("0.0");
   const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
@@ -60,7 +62,6 @@ export default function PerfilBarbeiro() {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
   }
 
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
@@ -72,7 +73,7 @@ export default function PerfilBarbeiro() {
           colors={[colors.primary, colors.secondary]}
           style={styles.headerGradient}
         >
-          <StaggeredText text="Perfil Profissional"style={styles.headerTitle}/>
+          <StaggeredText text="Perfil Profissional" style={styles.headerTitle} />
         </LinearGradient>
 
         {/* Conteúdo Principal */}
@@ -82,7 +83,7 @@ export default function PerfilBarbeiro() {
             <UserCard />
           </View>
 
-          {/* Card de Rating com dados dinâmicos do backend */}
+          {/* Card de Rating */}
           <View style={styles.statsContainer}>
             <View style={styles.ratingCard}>
               {carregandoRating ? (
@@ -101,9 +102,62 @@ export default function PerfilBarbeiro() {
             </View>
           </View>
 
-          {/* Opções do Menu */}
+          {/* Seção: Gestão do Negócio */}
+          <Text style={styles.sectionTitle}>Gestão & Finanças</Text>
           <View style={styles.menuContainer}>
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+            {/* Relatórios Financeiros */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              onPress={() => router.push("./Barbeiro/Relatorios")}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="bar-chart-2" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Relatório Financeiro</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            {/* Gestão de Serviços e Preços */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              onPress={() => router.push("./Barbeiro/Servicos")}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="scissors" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Serviços & Preços</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+
+            {/* Configuração de Horários */}
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+              onPress={() => router.push("./Barbeiro/HorariosTrabalho")}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.iconBadge}>
+                  <Feather name="clock" size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.menuItemText}>Horários & Disponibilidade</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#94A3B8" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Seção: Conta e Ajustes */}
+          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Conta</Text>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+            >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
                   <Feather name="user" size={20} color={colors.primary} />
@@ -113,22 +167,15 @@ export default function PerfilBarbeiro() {
               <Feather name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
-              <View style={styles.menuItemLeft}>
-                <View style={styles.iconBadge}>
-                  <Feather name="clock" size={20} color={colors.primary} />
-                </View>
-                <Text style={styles.menuItemText}>Horários de Trabalho</Text>
-              </View>
-              <Feather name="chevron-right" size={20} color="#94A3B8" />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.7}
+            >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
                   <Feather name="settings" size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.menuItemText}>Configurações</Text>
+                <Text style={styles.menuItemText}>Configurações Gerais</Text>
               </View>
               <Feather name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
@@ -143,7 +190,7 @@ export default function PerfilBarbeiro() {
                 <View style={styles.logoutIconBadge}>
                   <Feather name="log-out" size={20} color="#EF4444" />
                 </View>
-                <Text style={styles.logoutText}>Sair</Text>
+                <Text style={styles.logoutText}>Sair da Conta</Text>
               </View>
               <Feather name="chevron-right" size={20} color="#EF4444" />
             </TouchableOpacity>
@@ -228,33 +275,14 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginTop: 2,
   },
-  section: {
-    marginBottom: 24,
-  },
   sectionTitle: {
     fontFamily: "Inter_700Bold",
-    fontSize: 18,
+    fontSize: 16,
     color: "#0F172A",
     marginBottom: 12,
   },
-  chipsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  chip: {
-    backgroundColor: "#DBEAFE",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  chipText: {
-    fontFamily: "Inter_600SemiBold",
-    fontSize: 13,
-    color: colors.primary,
-  },
   menuContainer: {
-    gap: 12,
+    gap: 10,
   },
   menuItem: {
     backgroundColor: "#FFFFFF",

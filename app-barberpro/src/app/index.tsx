@@ -39,6 +39,8 @@ useEffect(() => {
   if(showSplash) return <SplashScreen />
 
   return (
-    <_layout/>
+    <AuthProvider>
+      <LoginScreen/>
+    </AuthProvider>
   );
 } 
