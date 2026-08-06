@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   FlatList,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,45 +17,19 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import { useFocusEffect } from "expo-router";
 
 import { colors } from "@/colors";
 import { StaggeredText } from "@/_components/ui/AnimatedText";
+import { useAuth } from "@/contexts/AuthContext";
+import { agendamentosService, AgendamentoDTO } from "@/services/agendamentosService";
 
-interface Agendamento {
-  id: string;
-  clienteNome: string;
-  servico: string;
-  horario: string;
-  preco: string;
-  status: "confirmado" | "concluido" | "cancelado";
+interface DiaCarrossel {
+  iso: string; // YYYY-MM-DD
+  diaNumero: string;
+  diaSemana: string;
+  eHoje: boolean;
 }
-
-const agendamentosExemplo: Agendamento[] = [
-  {
-    id: "1",
-    clienteNome: "Lucas Silva",
-    servico: "Corte + Barba",
-    horario: "09:00",
-    preco: "R$ 60,00",
-    status: "confirmado",
-  },
-  {
-    id: "2",
-    clienteNome: "Matheus Oliveira",
-    servico: "Corte Degradê",
-    horario: "10:00",
-    preco: "R$ 40,00",
-    status: "confirmado",
-  },
-  {
-    id: "3",
-    clienteNome: "Gabriel Santos",
-    servico: "Barboterapia",
-    horario: "11:30",
-    preco: "R$ 35,00",
-    status: "concluido",
-  },
-];
 
 export default function AgendaBarbeiro() {
   const [fontsLoaded] = useFonts({
@@ -61,7 +38,124 @@ export default function AgendaBarbeiro() {
     Inter_400Regular,
   });
 
-  const [filtroData, setFiltroData] = useState<"hoje" | "amanha">("hoje");
+  const { user } = useAuth();
+
+  // Função auxiliar para obter data local no formato YYYY-MM-DD
+  const formatarDataIsoLocal = (date: Date) => {
+    const ano = date.getFullYear();
+    const mes = String(date.getMonth() + 1).padStart(2, "0");
+    const dia = String(date.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  };
+
+  const hojeIso = formatarDataIsoLocal(new Date());
+
+  const [dataSelecionada, setDataSelecionada] = useState<string>(hojeIso);
+  const [agendamentos, setAgendamentos] = useState<AgendamentoDTO[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Gera os dias para o carrossel (3 dias passados e 14 dias futuros)
+  const listaDias = useMemo<DiaCarrossel[]>(() => {
+    const dias: DiaCarrossel[] = [];
+    const hoje = new Date();
+
+    for (let i = -3; i <= 14; i++) {
+      const d = new Date();
+      d.setDate(hoje.getDate() + i);
+
+      const iso = formatarDataIsoLocal(d);
+      const diaNumero = String(d.getDate()).padStart(2, "0");
+      const diaSemana = d
+        .toLocaleDateString("pt-BR", { weekday: "short" })
+        .replace(".", "")
+        .toUpperCase();
+
+      dias.push({
+        iso,
+        diaNumero,
+        diaSemana,
+        eHoje: iso === hojeIso,
+      });
+    }
+
+    return dias;
+  }, [hojeIso]);
+
+  // Busca agendamentos na API para a data selecionada
+  const carregarAgendamentos = async () => {
+    const barbeiroId = user?.barbeiroId || user?.id;
+
+    if (!barbeiroId) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const data = await agendamentosService.buscarPorBarbeiro(
+        barbeiroId,
+        dataSelecionada
+      );
+      setAgendamentos(data);
+    } catch (error) {
+      console.error("Erro ao carregar agenda:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarAgendamentos();
+    }, [dataSelecionada])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    carregarAgendamentos();
+  };
+
+  type AgendamentoStatus = AgendamentoDTO["status"];
+
+  // Alteração de status com atualização otimista
+  const executarAtualizacaoStatus = async (
+    id: number,
+    novoStatus: AgendamentoStatus
+  ) => {
+    try {
+      await agendamentosService.atualizarStatus(id, novoStatus);
+      setAgendamentos((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: novoStatus } : item
+        )
+      );
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível alterar o status do agendamento.");
+    }
+  };
+
+  const handleAlterarStatus = (id: number, novoStatus: AgendamentoStatus) => {
+    if (novoStatus === "CANCELADO") {
+      Alert.alert("Cancelar Agendamento", "Deseja realmente cancelar este horário?", [
+        { text: "Não", style: "cancel" },
+        {
+          text: "Sim",
+          style: "destructive",
+          onPress: () => executarAtualizacaoStatus(id, novoStatus),
+        },
+      ]);
+      return;
+    }
+    executarAtualizacaoStatus(id, novoStatus);
+  };
+
+  const formatarHora = (dataIso: string) => {
+    if (!dataIso) return "--:--";
+    const d = new Date(dataIso);
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  };
 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: colors.background }} />;
@@ -69,112 +163,187 @@ export default function AgendaBarbeiro() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Header com o padrão LinearGradient do app */}
+      {/* Header com Gradiente */}
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.headerGradient}
       >
         <StaggeredText text="Agenda do Barbeiro" style={styles.headerTitle} />
-        <StaggeredText text="Gerencie seus horários e atendimentos" style={styles.headerSubtitle} />
+        <StaggeredText
+          text="Gerencie seus horários e atendimentos"
+          style={styles.headerSubtitle}
+        />
 
-        {/* Filtro rápido de data */}
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              filtroData === "hoje" && styles.filterButtonActive,
-            ]}
-            onPress={() => setFiltroData("hoje")}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filtroData === "hoje" && styles.filterTextActive,
-              ]}
-            >
-              Hoje
-            </Text>
-          </TouchableOpacity>
+        {/* Carrossel Horizontal de Datas */}
+        <View style={styles.carouselContainer}>
+          <FlatList
+            data={listaDias}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.iso}
+            contentContainerStyle={styles.carouselContent}
+            renderItem={({ item }) => {
+              const estaSelecionado = item.iso === dataSelecionada;
 
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              filtroData === "amanha" && styles.filterButtonActive,
-            ]}
-            onPress={() => setFiltroData("amanha")}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                filtroData === "amanha" && styles.filterTextActive,
-              ]}
-            >
-              Amanhã
-            </Text>
-          </TouchableOpacity>
+              return (
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[
+                    styles.dayCard,
+                    estaSelecionado && styles.dayCardSelected,
+                  ]}
+                  onPress={() => setDataSelecionada(item.iso)}
+                >
+                  <Text
+                    style={[
+                      styles.daySemanaText,
+                      estaSelecionado && styles.daySemanaTextSelected,
+                    ]}
+                  >
+                    {item.diaSemana}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.dayNumeroText,
+                      estaSelecionado && styles.dayNumeroTextSelected,
+                    ]}
+                  >
+                    {item.diaNumero}
+                  </Text>
+
+                  {item.eHoje && (
+                    <View
+                      style={[
+                        styles.todayDot,
+                        estaSelecionado && styles.todayDotSelected,
+                      ]}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            }}
+          />
         </View>
       </LinearGradient>
 
-      {/* Lista de Agendamentos */}
-      <FlatList
-        data={agendamentosExemplo}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.timeBadge}>
-                <Feather name="clock" size={14} color={colors.primary} />
-                <Text style={styles.timeText}>{item.horario}</Text>
-              </View>
+      {/* Conteúdo Principal / Lista de Agendamentos */}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : (
+        <FlatList
+          data={agendamentos}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Feather name="calendar" size={40} color="#94A3B8" />
+              <Text style={styles.emptyText}>
+                Nenhum agendamento encontrado para este dia.
+              </Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.timeBadge}>
+                  <Feather name="clock" size={14} color={colors.primary} />
+                  <Text style={styles.timeText}>
+                    {formatarHora(item.hora_inicio)}
+                  </Text>
+                </View>
 
-              <View
-                style={[
-                  styles.statusBadge,
-                  item.status === "concluido"
-                    ? styles.statusConcluido
-                    : styles.statusConfirmado,
-                ]}
-              >
-                <Text
+                <View
                   style={[
-                    styles.statusText,
-                    item.status === "concluido"
-                      ? styles.statusTextConcluido
-                      : styles.statusTextConfirmado,
+                    styles.statusBadge,
+                    getStatusBadgeStyle(item.status).badge,
                   ]}
                 >
-                  {item.status === "concluido" ? "Concluído" : "Confirmado"}
+                  <Text
+                    style={[
+                      styles.statusText,
+                      getStatusBadgeStyle(item.status).text,
+                    ]}
+                  >
+                    {item.status}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.cardBody}>
+                <Text style={styles.clientName}>
+                  {item.clientes?.usuarios?.nome || "Cliente Não Identificado"}
+                </Text>
+                <Text style={styles.serviceName}>
+                  {item.servicos?.nome || "Serviço"}
+                </Text>
+                <Text style={styles.priceText}>
+                  R$ {Number(item.servicos?.preco || 0).toFixed(2)}
                 </Text>
               </View>
+
+              {/* Botões de Ação para horários ativos */}
+              {item.status !== "CONCLUIDO" && item.status !== "CANCELADO" && (
+                <View style={styles.cardActions}>
+                  <TouchableOpacity
+                    style={styles.btnActionSecondary}
+                    onPress={() => handleAlterarStatus(item.id, "CANCELADO")}
+                  >
+                    <Feather name="x-circle" size={16} color="#EF4444" />
+                    <Text style={styles.btnTextSecondary}>Cancelar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.btnActionPrimary}
+                    onPress={() => handleAlterarStatus(item.id, "CONCLUIDO")}
+                  >
+                    <Feather name="check-circle" size={16} color="#FFFFFF" />
+                    <Text style={styles.btnTextPrimary}>Concluir</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
             </View>
-
-            <View style={styles.cardBody}>
-              <Text style={styles.clientName}>{item.clienteNome}</Text>
-              <Text style={styles.serviceName}>{item.servico}</Text>
-              <Text style={styles.priceText}>{item.preco}</Text>
-            </View>
-
-            {item.status === "confirmado" && (
-              <View style={styles.cardActions}>
-                <TouchableOpacity style={styles.btnActionSecondary}>
-                  <Feather name="x-circle" size={16} color="#EF4444" />
-                  <Text style={styles.btnTextSecondary}>Cancelar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.btnActionPrimary}>
-                  <Feather name="check-circle" size={16} color="#FFFFFF" />
-                  <Text style={styles.btnTextPrimary}>Concluir</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
     </View>
   );
 }
+
+const getStatusBadgeStyle = (status: string) => {
+  switch (status) {
+    case "CONCLUIDO":
+      return {
+        badge: { backgroundColor: "#D1FAE5" },
+        text: { color: "#059669" },
+      };
+    case "CANCELADO":
+      return {
+        badge: { backgroundColor: "#FEE2E2" },
+        text: { color: "#EF4444" },
+      };
+    case "EM_ANDAMENTO":
+      return {
+        badge: { backgroundColor: "#FEF3C7" },
+        text: { color: "#D97706" },
+      };
+    default:
+      return {
+        badge: { backgroundColor: "#DBEAFE" },
+        text: { color: "#2563EB" },
+      };
+  }
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -199,32 +368,83 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 16,
   },
-  filterContainer: {
-    flexDirection: "row",
+  carouselContainer: {
+    marginTop: 8,
+  },
+  carouselContent: {
+    gap: 10,
+    paddingRight: 10,
+  },
+  dayCard: {
+    width: 60,
+    height: 75,
+    borderRadius: 14,
     backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 12,
-    padding: 4,
-  },
-  filterButton: {
-    flex: 1,
-    paddingVertical: 8,
+    justifyContent: "center",
     alignItems: "center",
-    borderRadius: 8,
+    paddingVertical: 8,
   },
-  filterButtonActive: {
+  dayCardSelected: {
     backgroundColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  filterText: {
+  daySemanaText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 14,
-    color: "#FFFFFF",
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.8)",
   },
-  filterTextActive: {
+  daySemanaTextSelected: {
     color: colors.primary,
+  },
+  dayNumeroText: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 18,
+    color: "#FFFFFF",
+    marginTop: 2,
+  },
+  dayNumeroTextSelected: {
+    color: "#0F172A",
+  },
+  todayDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "#FFFFFF",
+    marginTop: 4,
+  },
+  todayDotSelected: {
+    backgroundColor: colors.primary,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContainer: {
     padding: 24,
     paddingBottom: 40,
+  },
+  emptyContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderStyle: "dashed",
+    marginTop: 20,
+  },
+  emptyText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#94A3B8",
+    textAlign: "center",
+    marginTop: 12,
   },
   card: {
     backgroundColor: "#FFFFFF",
@@ -264,21 +484,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  statusConfirmado: {
-    backgroundColor: "#FEF3C7",
-  },
-  statusConcluido: {
-    backgroundColor: "#D1FAE5",
-  },
   statusText: {
     fontFamily: "Inter_600SemiBold",
-    fontSize: 12,
-  },
-  statusTextConfirmado: {
-    color: "#D97706",
-  },
-  statusTextConcluido: {
-    color: "#059669",
+    fontSize: 11,
   },
   cardBody: {
     marginBottom: 12,

@@ -35,8 +35,14 @@ export default function HomeBarbeiro() {
   const [refreshing, setRefreshing] = useState(false);
   const [agendamentos, setAgendamentos] = useState<AgendamentoDTO[]>([]);
 
-  // Formata data atual YYYY-MM-DD
-  const dataHoje = new Date().toISOString().split("T")[0];
+  // Formata data atual YYYY-MM-DD considerando o fuso horário local
+  const obterDataHojeLocal = () => {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+    const dia = String(hoje.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  };
 
   const carregarAgendamentos = async () => {
     const barbeiroId = user?.barbeiroId || user?.id;
@@ -47,6 +53,7 @@ export default function HomeBarbeiro() {
     }
 
     try {
+      const dataHoje = obterDataHojeLocal();
       const data = await agendamentosService.buscarPorBarbeiro(barbeiroId, dataHoje);
       setAgendamentos(data);
     } catch (error) {
@@ -68,13 +75,31 @@ export default function HomeBarbeiro() {
     carregarAgendamentos();
   };
 
-  const handleAlterarStatus = async (id: number, novoStatus: string) => {
+  const executarAtualizacaoStatus = async (id: number, novoStatus: string) => {
     try {
       await agendamentosService.atualizarStatus(id, novoStatus);
-      carregarAgendamentos();
+      // Atualização otimista do estado sem precisar recarregar toda a lista
+      setAgendamentos((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, status: novoStatus as "PENDENTE" | "CONFIRMADO" | "EM_ANDAMENTO" | "CONCLUIDO" | "CANCELADO" } : item))
+      );
     } catch (error) {
       Alert.alert("Erro", "Não foi possível atualizar o status do agendamento.");
     }
+  };
+
+  const handleAlterarStatus = (id: number, novoStatus: string) => {
+    if (novoStatus === "CANCELADO") {
+      Alert.alert("Cancelar Agendamento", "Deseja realmente cancelar este atendimento?", [
+        { text: "Não", style: "cancel" },
+        {
+          text: "Sim",
+          style: "destructive",
+          onPress: () => executarAtualizacaoStatus(id, novoStatus),
+        },
+      ]);
+      return;
+    }
+    executarAtualizacaoStatus(id, novoStatus);
   };
 
   // Cálculos dinâmicos
