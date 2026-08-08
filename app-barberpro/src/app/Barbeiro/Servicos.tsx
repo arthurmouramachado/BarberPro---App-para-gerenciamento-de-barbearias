@@ -1,3 +1,12 @@
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from "@expo-google-fonts/inter";
+import Feather from "@expo/vector-icons/Feather";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -11,19 +20,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Feather from "@expo/vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
-import { useRouter } from "expo-router";
 
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
-import { AnimatedSwitch } from "@/_components/ui/AnimatedSwitch";
+import { servicosService } from "@/services/servicosService";
 
 // Interface do serviço / pacote
 export interface ServicoItem {
@@ -55,7 +55,9 @@ export default function Servicos() {
   // Estados do Modal / Formulário
   const [modalVisivel, setModalVisivel] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
-  const [itemEdicaoId, setItemEdicaoId] = useState<string | number | null>(null);
+  const [itemEdicaoId, setItemEdicaoId] = useState<string | number | null>(
+    null,
+  );
 
   // Campos do formulário
   const [nome, setNome] = useState("");
@@ -64,7 +66,7 @@ export default function Servicos() {
   const [descricao, setDescricao] = useState("");
   const [tipo, setTipo] = useState<"SERVICO" | "PACOTE">("SERVICO");
 
-  // Busca dados na API
+
   async function carregarServicos() {
     if (!user?.id) {
       setLoading(false);
@@ -72,41 +74,19 @@ export default function Servicos() {
     }
 
     try {
-      // TODO: Substituir pela chamada real da sua API:
-      // const dados = await servicosService.listarPorBarbeiro(user.id);
-      
-      // Exemplo de dados mockados para testes:
-      const dadosMock: ServicoItem[] = [
-        {
-          id: "1",
-          nome: "Corte Degradê / Social",
-          preco: 35.0,
-          duracao: 45,
-          descricao: "Corte moderno ou clássico com acabamento na tesoura/máquina.",
-          tipo: "SERVICO",
-          ativo: true,
-        },
-        {
-          id: "2",
-          nome: "Barba Completa",
-          preco: 25.0,
-          duracao: 30,
-          descricao: "Modelagem de barba com toalha quente e pós-barba.",
-          tipo: "SERVICO",
-          ativo: true,
-        },
-        {
-          id: "3",
-          nome: "Plano Mensal Cabelo + Barba",
-          preco: 120.0,
-          duracao: 60,
-          descricao: "Acesso a 4 cortes e 4 barbas por mês (1x por semana).",
-          tipo: "PACOTE",
-          ativo: true,
-        },
-      ];
+      const dados = await servicosService.listarPorBarbeiro(user.id);
 
-      setServicos(dadosMock);
+      setServicos(
+        dados.map((item) => ({
+          id: item.id,
+          nome: item.nome,
+          preco: item.preco,
+          duracao: item.duracao || 0,
+          descricao: item.descricao,
+          tipo: (item.tipo || "SERVICO") as "SERVICO" | "PACOTE",
+          ativo: item.ativo,
+        })),
+      );
     } catch (error) {
       console.error("Erro ao carregar serviços:", error);
       Alert.alert("Erro", "Não foi possível carregar a lista de serviços.");
@@ -166,31 +146,49 @@ export default function Servicos() {
       return;
     }
 
+    if (!user?.id) {
+      Alert.alert("Erro", "Usuário inválido.");
+      return;
+    }
+
     setSalvando(true);
 
     try {
       const payload = {
-        barbeiro_id: user?.id,
+        barbearia_id: user.id,
         nome: nome.trim(),
         preco: valorPreco,
-        duracao: valorDuracao,
+        duracao_minutos: valorDuracao,
         descricao: descricao.trim(),
         tipo,
       };
 
       if (itemEdicaoId) {
-        // TODO: await servicosService.atualizar(itemEdicaoId, payload);
+        await servicosService.atualizar(itemEdicaoId, payload);
         setServicos((prev) =>
           prev.map((item) =>
-            item.id === itemEdicaoId ? { ...item, ...payload } : item
-          )
+            item.id === itemEdicaoId
+              ? {
+                  ...item,
+                  nome: nome.trim(),
+                  preco: valorPreco,
+                  duracao: valorDuracao,
+                  descricao: descricao.trim(),
+                  tipo,
+                }
+              : item,
+          ),
         );
         Alert.alert("Sucesso", "Item atualizado com sucesso!");
       } else {
-        // TODO: const novo = await servicosService.criar(payload);
+        await servicosService.cadastrar(payload);
         const novoItem: ServicoItem = {
           id: Date.now().toString(),
-          ...payload,
+          nome: nome.trim(),
+          preco: valorPreco,
+          duracao: valorDuracao,
+          descricao: descricao.trim(),
+          tipo,
           ativo: true,
         };
         setServicos((prev) => [novoItem, ...prev]);
@@ -218,7 +216,7 @@ export default function Servicos() {
           style: "destructive",
           onPress: async () => {
             try {
-              // TODO: await servicosService.deletar(id);
+             await servicosService.deletar(id);
               setServicos((prev) => prev.filter((item) => item.id !== id));
             } catch (error) {
               console.error("Erro ao deletar:", error);
@@ -226,7 +224,7 @@ export default function Servicos() {
             }
           },
         },
-      ]
+      ],
     );
   }
 
@@ -274,20 +272,20 @@ export default function Servicos() {
           {(["TODOS", "SERVICO", "PACOTE"] as const).map((aba) => (
             <TouchableOpacity
               key={aba}
-              style={[styles.tabButton, filtro === aba && styles.tabButtonActive]}
+              style={[
+                styles.tabButton,
+                filtro === aba && styles.tabButtonActive,
+              ]}
               onPress={() => setFiltro(aba)}
             >
               <Text
-                style={[
-                  styles.tabText,
-                  filtro === aba && styles.tabTextActive,
-                ]}
+                style={[styles.tabText, filtro === aba && styles.tabTextActive]}
               >
                 {aba === "TODOS"
                   ? "Todos"
                   : aba === "SERVICO"
-                  ? "Serviços"
-                  : "Pacotes"}
+                    ? "Serviços"
+                    : "Pacotes"}
               </Text>
             </TouchableOpacity>
           ))}

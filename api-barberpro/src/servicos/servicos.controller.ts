@@ -31,6 +31,11 @@ export class ServicosController {
     return this.servicosService.findOne(+id);
   }
 
+  @Get('servicos/barbeiro/:barbeiroId')
+  findByBarbeiroId(@Param('barbeiroId') barbeiroId: string) {
+    return this.servicosService.findByBarbeiroId(+barbeiroId);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateServicoDto: UpdateServicoDto) {
     return this.servicosService.update(+id, updateServicoDto);

@@ -109,7 +109,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("./Barbeiro/Relatorios")}
+              onPress={() => router.push("/Barbeiro/Relatorios")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
@@ -124,7 +124,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("./Barbeiro/Servicos")}
+              onPress={() => router.push("/Barbeiro/Servicos")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
@@ -139,7 +139,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("./Barbeiro/HorariosTrabalho")}
+              onPress={() => router.push("/Barbeiro/HorariosTrabalho")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>

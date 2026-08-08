@@ -33,6 +33,20 @@ export class ServicosService {
     });
   }
 
+  async findByBarbeiroId(barbeiro_id: number) {
+    return this.prisma.servicos.findMany({
+      where: {
+        barbearias: {
+          barbeiros: {
+            some: {
+              id: barbeiro_id,
+            },
+          },
+        },
+      },
+    });
+  }
+
   findAll(barbearia_id?: number) {
     return this.prisma.servicos.findMany({
       where: {
