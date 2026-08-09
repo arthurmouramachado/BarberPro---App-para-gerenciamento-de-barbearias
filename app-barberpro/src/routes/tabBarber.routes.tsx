@@ -1,17 +1,16 @@
 // 1. Importações do React e do Navigation
+import AgendaBarbeiro from "@/app/Barbeiro/AgendaBarbeiro";
+import HorariosTrabalho from "@/app/Barbeiro/HorariosTrabalho";
+import PerfilBarbeiro from "@/app/Barbeiro/PerfilBarbeiro";
+import RelatoriosFinanceiros from "@/app/Barbeiro/RelatoriosFinanceiros";
+import Servicos from "@/app/Barbeiro/Servicos";
 import Feather from "@expo/vector-icons/Feather";
-import {
-    createBottomTabNavigator,
-} from "@react-navigation/bottom-tabs";
-import {
-    createStaticNavigation,
-} from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeBarbeiro from "../app/Barbeiro/HomeBarbeiro";
-import PerfilBarbeiro from "@/app/Barbeiro/PerfilBarbeiro";
-import AgendaBarbeiro from "@/app/Barbeiro/AgendaBarbeiro";
 // Crie esses arquivos futuramente se precisar, ou substitua temporariamente
-// import AgendaBarbeiro from "../app/Barbeiro/AgendaBarbeiro"; 
+// import AgendaBarbeiro from "../app/Barbeiro/AgendaBarbeiro";
 // import PerfilBarbeiro from "../app/Barbeiro/PerfilBarbeiro";
 
 const AbasBarbeiro = createBottomTabNavigator({
@@ -67,14 +66,24 @@ const AbasBarbeiro = createBottomTabNavigator({
 
 const NavegacaoGeralBarbeiro = createNativeStackNavigator({
   screenOptions: {
-    headerShown: false,  
+    headerShown: false,
   },
   screens: {
     AbasBarbeiroPrincipais: {
-      screen: AbasBarbeiro,  
+      screen: AbasBarbeiro,
     },
-    // Outras telas secundárias do barbeiro entram aqui (ex: Criar Serviço, Editar Perfil, etc)
+    RelatoriosFinanceiros: {
+      screen: RelatoriosFinanceiros,
+    },
+    Servicos: {
+      screen: Servicos,
+    },
+    HorariosTrabalho: {
+      screen: HorariosTrabalho,
+    },
   },
 });
 
-export const NavegacaoBarbeiroPrincipal = createStaticNavigation(NavegacaoGeralBarbeiro);
+export const NavegacaoBarbeiroPrincipal = createStaticNavigation(
+  NavegacaoGeralBarbeiro,
+);

@@ -1,3 +1,12 @@
+import {
+  Inter_400Regular,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  useFonts,
+} from "@expo-google-fonts/inter";
+import Feather from "@expo/vector-icons/Feather";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -7,21 +16,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Feather from "@expo/vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
-import { useRouter } from "expo-router";
 
+import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { UserCard } from "@/_components/UserCard";
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { avaliacoesService } from "@/services/avaliacoes";
-import { StaggeredText } from "@/_components/ui/AnimatedText";
 
 export default function PerfilBarbeiro() {
   const [fontsLoaded] = useFonts({
@@ -73,7 +73,10 @@ export default function PerfilBarbeiro() {
           colors={[colors.primary, colors.secondary]}
           style={styles.headerGradient}
         >
-          <StaggeredText text="Perfil Profissional" style={styles.headerTitle} />
+          <StaggeredText
+            text="Perfil Profissional"
+            style={styles.headerTitle}
+          />
         </LinearGradient>
 
         {/* Conteúdo Principal */}
@@ -109,11 +112,17 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("/Barbeiro/Relatorios")}
+              onPress={() =>
+                router.push("/Barbeiro/RelatoriosFinanceiros" as any)
+              }
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
-                  <Feather name="bar-chart-2" size={20} color={colors.primary} />
+                  <Feather
+                    name="bar-chart-2"
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
                 <Text style={styles.menuItemText}>Relatório Financeiro</Text>
               </View>
@@ -145,7 +154,9 @@ export default function PerfilBarbeiro() {
                 <View style={styles.iconBadge}>
                   <Feather name="clock" size={20} color={colors.primary} />
                 </View>
-                <Text style={styles.menuItemText}>Horários & Disponibilidade</Text>
+                <Text style={styles.menuItemText}>
+                  Horários & Disponibilidade
+                </Text>
               </View>
               <Feather name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
@@ -154,10 +165,7 @@ export default function PerfilBarbeiro() {
           {/* Seção: Conta e Ajustes */}
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Conta</Text>
           <View style={styles.menuContainer}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
                   <Feather name="user" size={20} color={colors.primary} />
@@ -167,10 +175,7 @@ export default function PerfilBarbeiro() {
               <Feather name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.menuItem}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.7}>
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
                   <Feather name="settings" size={20} color={colors.primary} />

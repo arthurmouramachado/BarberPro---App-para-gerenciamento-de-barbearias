@@ -1,3 +1,6 @@
+import Feather from "@expo/vector-icons/Feather";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -8,9 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Feather from "@expo/vector-icons/Feather";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,7 +25,9 @@ export default function RelatoriosFinanceiros() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [relatorio, setRelatorio] = useState<RelatorioFinanceiroDTO | null>(null);
+  const [relatorio, setRelatorio] = useState<RelatorioFinanceiroDTO | null>(
+    null,
+  );
 
   async function carregarRelatorio() {
     if (!user?.id) return;
