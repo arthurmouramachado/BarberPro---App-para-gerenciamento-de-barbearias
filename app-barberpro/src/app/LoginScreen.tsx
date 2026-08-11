@@ -3,24 +3,32 @@ import { useAuth } from "@/contexts/AuthContext";
 import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link, useRouter } from "expo-router";
-import React, { useState } from "react"; // IMPORTADO O USESTATE
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react"; // IMPORTADO O USESTATE
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
+import { authService } from "@/services/authService";
 
 export default function LoginScreen() {
   const router = useRouter();
 
   const { user, signIn } = useAuth();
+  const { emailCadastrado } = useLocalSearchParams<{ emailCadastrado?: string }>();
 
   // 1. Criando os estados para monitorar o que é digitado
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(emailCadastrado || "");
   const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // 2. Regra de validação: Só é válido se email E senha não estiverem vazios
   const isFormValid = email.trim() !== "" && senha.trim() !== "";
+
+  useEffect(() => {
+    if (emailCadastrado) {
+      setEmail(emailCadastrado);
+    }
+  }, [emailCadastrado]);
 
   
   const handleLogin = async () => {
@@ -30,6 +38,10 @@ export default function LoginScreen() {
 
     try {
       setIsLoading(true);
+      const response = await authService.login(
+        email.trim().toLowerCase(), 
+        senha.trim()
+      );
       const loginFeito = await signIn(email, senha);
       const perfil = loginFeito?.funcao;
 

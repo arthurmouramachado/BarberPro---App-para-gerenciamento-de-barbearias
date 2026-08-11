@@ -38,6 +38,11 @@ export const barbeiroService = {
       return response.data;
     },
 
+    async atualizar(id: string, barbeiro: any) {
+      const response = await api.patch(`/barbeiros/${id}`, barbeiro);
+      return response.data;
+    },
+
     async deletar(id: string) {
       const response = await api.delete(`/barbeiros/${id}`);
       return response.data;

@@ -16,23 +16,14 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto) {
     console.log(createUserDto);
-    const {
-      nome,
-      email,
-      senha,
-      funcao,
-      telefone,
-      data_nascimento,
-      especialidade,
-      bio,
-      ativo,
-    } = createUserDto;
+    const { funcao, data_nascimento, especialidade, bio, ativo } =
+      createUserDto;
 
-    const hash = await bcrypt.hash(senha, 10);
+    const hash = await bcrypt.hash(createUserDto.senha, 10);
 
     return this.prisma.$transaction(async () => {
       const usuario = await this.prisma.usuarios.create({
-        data: { nome, email, senha: hash, funcao, telefone },
+        data: { ...createUserDto, senha: hash },
       });
 
       if (funcao === 'CLIENTE') {

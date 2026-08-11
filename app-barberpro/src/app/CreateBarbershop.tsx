@@ -103,7 +103,7 @@ export default function CreateBarbershop() {
       await barbeariaService.cadastrar(formData as any);
 
       Alert.alert("Sucesso", "Barbearia cadastrada com sucesso!", [
-        { text: "OK", onPress: () => router.replace("./HomeBarbeiro") },
+        { text: "OK", onPress: () => router.replace("/LoginScreen") },
       ]);
     } catch (error: any) {
       console.error("Erro no cadastro:", error);

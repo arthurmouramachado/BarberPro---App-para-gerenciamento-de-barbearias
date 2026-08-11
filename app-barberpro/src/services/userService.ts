@@ -17,7 +17,7 @@ export const userService = {
     },
     
     async alterarPerfil(userId: string, userData: any) {
-        const response = await api.put(`/user/${userId}`, userData);
+        const response = await api.patch(`/user/${userId}`, userData);
         return response.data;
     },
 

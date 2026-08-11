@@ -6,7 +6,6 @@ import {
 } from "@expo-google-fonts/inter";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -22,6 +21,7 @@ import { UserCard } from "@/_components/UserCard";
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { avaliacoesService } from "@/services/avaliacoes";
+import { useNavigation } from "@react-navigation/native";
 
 export default function PerfilBarbeiro() {
   const [fontsLoaded] = useFonts({
@@ -31,7 +31,7 @@ export default function PerfilBarbeiro() {
   });
 
   const { user, signOut } = useAuth();
-  const router = useRouter();
+  const navigation = useNavigation<any>();
 
   const [rating, setRating] = useState<string>("0.0");
   const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
@@ -113,7 +113,7 @@ export default function PerfilBarbeiro() {
               style={styles.menuItem}
               activeOpacity={0.7}
               onPress={() =>
-                router.push("/Barbeiro/RelatoriosFinanceiros" as any)
+                navigation.navigate("/Barbeiro/RelatoriosFinanceiros")
               }
             >
               <View style={styles.menuItemLeft}>
@@ -133,7 +133,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("/Barbeiro/Servicos")}
+              onPress={() => navigation.navigate("/Barbeiro/Servicos")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
@@ -148,7 +148,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => router.push("/Barbeiro/HorariosTrabalho")}
+              onPress={() => navigation.navigate("/Barbeiro/HorariosTrabalho")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>

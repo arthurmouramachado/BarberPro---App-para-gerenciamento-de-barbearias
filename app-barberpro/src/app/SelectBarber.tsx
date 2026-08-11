@@ -1,27 +1,35 @@
 import Feather from "@expo/vector-icons/Feather";
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router"; 
+import { useLocalSearchParams, useRouter } from "expo-router"; // 1. IMPORTADO USELOCALSEARCHPARAMS
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { colors } from "@/colors";
 
-export default function SelectScreen() {
+export default function SelectBarber() {
   const router = useRouter(); 
+  const params = useLocalSearchParams(); // 2. CAPTURA OS DADOS QUE VIERAM DA SELECTSCREEN
+
   const [perfilSelecionado, setPerfilSelecionado] = useState<"funcionario" | "dono" | null>(null);
 
   const handleContinuar = () => {
     if (perfilSelecionado === "funcionario") {
-      router.push("./BuscarBarbearia"); 
+      // 3. REPASSA OS DADOS PARA A TELA BUSCARBARBEARIA
+      router.push({
+        pathname: "/BuscarBarbearia",
+        params: { ...params, subtipo: "FUNCIONARIO" },
+      }); 
     } else if (perfilSelecionado === "dono") {
-      router.push("/CreateBarbershop");
+      router.push({
+        pathname: "/CreateBarbershop",
+        params: { ...params, subtipo: "DONO" },
+      });
     }
   };
 
   return (
     <LinearGradient colors={[colors.background, colors.background]} style={styles.container}>
-
       <Text style={styles.title}>Você já trabalha em uma barbearia?</Text>
       <Text style={styles.subtitle}>Escolha a opção que melhor descreve você</Text>
 
@@ -67,12 +75,11 @@ export default function SelectScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Botão agora possui o onPress configurado para avançar */}
       <Button
         label="Continuar"
         style={styles.button}
         isActive={perfilSelecionado !== null} 
-        onPress={handleContinuar} // ADICIONADO
+        onPress={handleContinuar}
         icon={
           <Feather 
             name="arrow-right" 
@@ -81,7 +88,6 @@ export default function SelectScreen() {
           />
         }
       />
-
     </LinearGradient>
   );
 }
@@ -92,19 +98,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
-  },
-  logoBadge: {
-    width: 90,
-    height: 90,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#155DFC",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-    marginBottom: 24,
   },
   title: {
     fontFamily: "Inter_700Bold",
@@ -129,9 +122,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#E2E8F0",
-    borderRadius: 24,          // Cantos mais arredondados e modernos como no Figma
-    paddingVertical: 24,        // Aumenta a altura interna vertical do card
-    paddingHorizontal: 20,      // Espaçamento confortável nas laterais
+    borderRadius: 24,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: "center",
     marginBottom: 16,
     shadowColor: "#0F172A",
@@ -145,9 +138,9 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   iconBadge: {
-    width: 56,                  // Quadrado do ícone ligeiramente maior
+    width: 56,
     height: 56,
-    borderRadius: 16,           // Cantos do ícone acompanhando a suavidade do card
+    borderRadius: 16,
     backgroundColor: "#155DFC",
     justifyContent: "center",
     alignItems: "center",
@@ -159,33 +152,17 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontFamily: "Inter_700Bold",
     color: "#0F172A",
-    fontSize: 18,               // Título com mais destaque
+    fontSize: 18,
   },
   cardDescription: {
     fontFamily: "Inter_400Regular",
     color: "#64748B",
-    fontSize: 14,               // Fonte ligeiramente maior para melhor leitura
-    marginTop: 6,               // Mais respiro entre o título e a descrição
-    lineHeight: 20,             // Distância perfeita entre as linhas de texto
+    fontSize: 14,
+    marginTop: 6,
+    lineHeight: 20,
   },
-button: {
-    width: "90%",  // Faz o botão respeitar o padding horizontal da tela (24) e alinhar com os cards
-    marginTop: 24,  // Espaçamento limpo entre o último card e o botão
-  },
-  footerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+  button: {
+    width: "90%",
     marginTop: 24,
-  },
-  footerText: {
-    fontFamily: "Inter_400Regular",
-    color: "#64748B",
-    fontSize: 15,
-  },
-  footerLink: {
-    fontFamily: "Inter_700Bold",
-    color: "#155DFC",
-    fontSize: 15,
   },
 });
