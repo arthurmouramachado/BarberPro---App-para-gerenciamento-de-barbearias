@@ -42,7 +42,10 @@ export const servicosService = {
   },
 
   async listarPorBarbeiro(barbeiroId: number): Promise<ServicoDTO[]> {
-    const response = await api.get<ServicoDTO[]>(`/servicos/barbeiro/${barbeiroId}`);
+    console.log("--> ID enviado para busca:", barbeiroId);
+    console.log("--> Rota chamada:", `/servicos/barbeiro/${barbeiroId}`);
+
+    const response = await api.get<ServicoDTO[]>(`/servicos/${barbeiroId}`);
     return response.data;
   },
 

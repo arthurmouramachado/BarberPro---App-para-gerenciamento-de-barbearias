@@ -9,6 +9,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeBarbeiro from "../app/Barbeiro/HomeBarbeiro";
+import ExcluirBarbeiroAdmin from "@/app/Barbeiro/ExcluirBarbeiroAdmin";
 
 const AbasBarbeiro = createBottomTabNavigator({
   screenOptions: {
@@ -77,6 +78,9 @@ const NavegacaoGeralBarbeiro = createNativeStackNavigator({
     },
     HorariosTrabalho: {
       screen: HorariosTrabalho,
+    },
+    ExcluirBarbeiroAdmin: {
+      screen: ExcluirBarbeiroAdmin,
     },
   },
 });

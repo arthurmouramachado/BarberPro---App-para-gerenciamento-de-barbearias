@@ -119,7 +119,7 @@ export default function LoginScreen() {
   );
 }
 
-// ... Seus styles do Login permanecem iguais (lembrando de tirar o marginTop: -400 do container se o clique sumir)
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

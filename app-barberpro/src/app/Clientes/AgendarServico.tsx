@@ -1,14 +1,4 @@
-import { Button } from "@/_components/Button";
-import { ModalPix } from "@/_components/ModalPix"; // Ajuste o caminho se seu componente estiver em outro diretório
-import { useAgendamento } from "@/contexts/AgendamentoContext";
-import { agendamentosService } from "@/services/agendamentosService";
-import { barbeiroService } from "@/services/barbeiroService";
-import { disponibilidadeService } from "@/services/disponibilidadeService";
-import { servicosService } from "@/services/servicosService";
-import { gerarHorariosDisponiveis } from "@/utils/gerarHorarios";
-import { ptBR } from "@/utils/localeCalendarConfig";
-import { useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +10,17 @@ import {
   View,
 } from "react-native";
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
+import { useNavigation } from "expo-router";
+
+import { Button } from "@/_components/Button";
+import { ModalPix } from "@/_components/ModalPix";
+import { useAgendamento } from "@/contexts/AgendamentoContext";
+import { agendamentosService } from "@/services/agendamentosService";
+import { barbeiroService } from "@/services/barbeiroService";
+import { disponibilidadeService } from "@/services/disponibilidadeService";
+import { servicosService } from "@/services/servicosService";
+import { gerarHorariosDisponiveis } from "@/utils/gerarHorarios";
+import { ptBR } from "@/utils/localeCalendarConfig";
 
 LocaleConfig.locales["pt-br"] = ptBR;
 LocaleConfig.defaultLocale = "pt-br";
@@ -31,12 +32,9 @@ export default function AgendarServico() {
   const [loadingBarbeiros, setLoadingBarbeiros] = useState(false);
   const [loadingHorarios, setLoadingHorarios] = useState(false);
   const [loadingAgendamento, setLoadingAgendamento] = useState(false);
-  const [day, setDay] = useState<DateData>();
 
   const [horarios, setHorarios] = useState<string[]>([]);
-  const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(
-    null,
-  );
+  const [horarioSelecionado, setHorarioSelecionado] = useState<string | null>(null);
 
   // Estados do Modal PIX
   const [modalVisible, setModalVisible] = useState(false);
@@ -91,25 +89,31 @@ export default function AgendarServico() {
         const disponibilidadesBarbeiro =
           await disponibilidadeService.listarPorBarbeiro(barbeiroId);
         const turnosDoDia = disponibilidadesBarbeiro.filter(
-          (d) => d.dia_da_semana === diaDaSemana,
+          (d) => d.dia_da_semana === diaDaSemana
         );
 
         let duracaoMinutos = 30;
         if (servicoId) {
           const servico = await servicosService.buscarPorId(servicoId);
-          duracaoMinutos = servico.duracaoMinutos || 30;
+          duracaoMinutos = servico.duracao_minutos || 30;
         }
 
-        const agendamentosOcupados = await agendamentosService.listarTodas(
-          barbeariaId,
+        const agendamentosOcupados = await agendamentosService.buscarPorBarbeiro(
           barbeiroId,
-          dataSelecionada,
+          dataSelecionada
+        );
+
+        const agendamentosExistentes = (agendamentosOcupados || []).map(
+          (agendamento) => ({
+            dataHorario: `${dataSelecionada} ${agendamento.horario}`,
+            duracaoMinutos: agendamento.duracao_minutos || 30,
+          })
         );
 
         const slotsLivres = gerarHorariosDisponiveis({
           turnosDoDia,
           duracaoMinutos,
-          agendamentosExistentes: agendamentosOcupados || [],
+          agendamentosExistentes,
         });
 
         setHorarios(slotsLivres);
@@ -117,7 +121,7 @@ export default function AgendarServico() {
         console.log("Erro ao calcular horários disponíveis:", error);
         Alert.alert(
           "Erro",
-          "Não foi possível carregar os horários para este dia.",
+          "Não foi possível carregar os horários para este dia."
         );
       } finally {
         setLoadingHorarios(false);
@@ -127,12 +131,11 @@ export default function AgendarServico() {
     carregarEDividirHorarios();
   }, [barbeiroId, dataSelecionada, servicoId]);
 
-  // Função para lidar com a confirmação do agendamento
   const handleConfirmarAgendamento = async () => {
     if (!barbeiroId || !dataSelecionada || !horarioSelecionado) {
       Alert.alert(
         "Atenção",
-        "Selecione um barbeiro, uma data e um horário para continuar.",
+        "Selecione um barbeiro, uma data e um horário para continuar."
       );
       return;
     }
@@ -140,7 +143,6 @@ export default function AgendarServico() {
     try {
       setLoadingAgendamento(true);
 
-      // Chamada para criar o agendamento no backend
       const resposta = await agendamentosService.marcar({
         barbearia_id: barbeariaId,
         barbeiro_id: barbeiroId,
@@ -150,7 +152,6 @@ export default function AgendarServico() {
         horario: horarioSelecionado,
       } as any);
 
-      // SE FOR PLANO/PACOTE -> Abre o Modal do PIX
       if (planoId) {
         setAgendamentoCriado({
           id: resposta.id,
@@ -158,11 +159,10 @@ export default function AgendarServico() {
         });
         setModalVisible(true);
       } else {
-        // SE FOR SERVIÇO AVULSO -> Conclui diretamente
         Alert.alert(
           "Agendamento Realizado!",
           "Seu agendamento foi confirmado com sucesso. O pagamento será feito no local.",
-          [{ text: "OK", onPress: () => navigation.goBack() }],
+          [{ text: "OK", onPress: () => navigation.goBack() }]
         );
       }
     } catch (error: any) {
@@ -170,7 +170,7 @@ export default function AgendarServico() {
       Alert.alert(
         "Erro",
         error?.response?.data?.message ||
-          "Não foi possível realizar o agendamento.",
+          "Não foi possível realizar o agendamento."
       );
     } finally {
       setLoadingAgendamento(false);
@@ -179,7 +179,7 @@ export default function AgendarServico() {
 
   return (
     <View style={styles.container}>
-      <ScrollView>
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Banner Informativo */}
         <View
           style={[
@@ -214,7 +214,8 @@ export default function AgendarServico() {
             contentContainerStyle={styles.listaContent}
             renderItem={({ item }) => {
               const isSelected = item.id === barbeiroId;
-              const nomeBarbeiro = item.usuarios?.nome ?? "Barbeiro";
+              const nomeBarbeiro =
+                item.usuario?.nome || item.usuarios?.nome || "Barbeiro";
 
               return (
                 <TouchableOpacity
@@ -256,18 +257,19 @@ export default function AgendarServico() {
         {/* Calendário */}
         <View style={styles.calendarContainer}>
           <Calendar
-            onDayPress={(date) => {
-              setDay(date);
+            onDayPress={(date: DateData) => {
               selecionarData(date.dateString);
             }}
             enableSwipeMonths={true}
             markedDates={
-              day && {
-                [day.dateString]: {
-                  selected: true,
-                  selectedColor: "#155DFC",
-                },
-              }
+              dataSelecionada
+                ? {
+                    [dataSelecionada]: {
+                      selected: true,
+                      selectedColor: "#155DFC",
+                    },
+                  }
+                : {}
             }
             headerStyle={{
               borderBottomWidth: 0.5,

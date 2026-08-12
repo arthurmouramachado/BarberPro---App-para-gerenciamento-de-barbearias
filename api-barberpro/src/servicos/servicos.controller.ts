@@ -31,7 +31,7 @@ export class ServicosController {
     return this.servicosService.findOne(+id);
   }
 
-  @Get('servicos/barbeiro/:barbeiroId')
+  @Get('servicos/:barbeiroId')
   findByBarbeiroId(@Param('barbeiroId') barbeiroId: string) {
     return this.servicosService.findByBarbeiroId(+barbeiroId);
   }

@@ -1,6 +1,8 @@
 import { api } from './api';
 
 export interface AgendamentoDTO {
+  horario: any;
+  duracao_minutos: number;
   id: number;
   cliente_id: number;
   barbeiro_id: number;

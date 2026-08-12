@@ -25,12 +25,11 @@ import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { servicosService } from "@/services/servicosService";
 
-// Interface do serviço / pacote
 export interface ServicoItem {
   id: string | number;
   nome: string;
   preco: number;
-  duracao: number; // Em minutos
+  duracao: number;
   descricao?: string;
   tipo: "SERVICO" | "PACOTE";
   ativo?: boolean;
@@ -46,46 +45,42 @@ export default function Servicos() {
   const router = useRouter();
   const { user } = useAuth();
 
-  // Estados da lista
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [servicos, setServicos] = useState<ServicoItem[]>([]);
   const [filtro, setFiltro] = useState<"TODOS" | "SERVICO" | "PACOTE">("TODOS");
 
-  // Estados do Modal / Formulário
   const [modalVisivel, setModalVisivel] = useState<boolean>(false);
   const [salvando, setSalvando] = useState<boolean>(false);
-  const [itemEdicaoId, setItemEdicaoId] = useState<string | number | null>(
-    null,
-  );
+  const [itemEdicaoId, setItemEdicaoId] = useState<string | number | null>(null);
 
-  // Campos do formulário
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
   const [duracao, setDuracao] = useState("");
   const [descricao, setDescricao] = useState("");
   const [tipo, setTipo] = useState<"SERVICO" | "PACOTE">("SERVICO");
 
-
   async function carregarServicos() {
-    if (!user?.id) {
+    const barbeiroId = user?.barbeiroId || user?.id;
+    if (!barbeiroId) {
+      console.warn("Nenhum ID de barbeiro disponível no contexto do usuário.");
       setLoading(false);
       return;
     }
 
     try {
-      const dados = await servicosService.listarPorBarbeiro(user.id);
+      const dados = await servicosService.listarPorBarbeiro(barbeiroId);
 
       setServicos(
-        dados.map((item) => ({
+        dados.map((item: any) => ({
           id: item.id,
           nome: item.nome,
           preco: item.preco,
-          duracao: item.duracao || 0,
+          duracao: item.duracao || item.duracao_minutos || item.duracaoMinutos || 0,
           descricao: item.descricao,
           tipo: (item.tipo || "SERVICO") as "SERVICO" | "PACOTE",
           ativo: item.ativo,
-        })),
+        }))
       );
     } catch (error) {
       console.error("Erro ao carregar serviços:", error);
@@ -98,14 +93,13 @@ export default function Servicos() {
 
   useEffect(() => {
     carregarServicos();
-  }, [user?.id]);
+  }, [user?.id, user?.barbeiroId]);
 
   function onRefresh() {
     setRefreshing(true);
     carregarServicos();
   }
 
-  // ABRIR MODAL PARA CRIAR
   function abrirModalCriar() {
     setItemEdicaoId(null);
     setNome("");
@@ -116,18 +110,16 @@ export default function Servicos() {
     setModalVisivel(true);
   }
 
-  // ABRIR MODAL PARA EDITAR
   function abrirModalEditar(item: ServicoItem) {
     setItemEdicaoId(item.id);
-    setNome(item.nome);
-    setPreco(item.preco.toString());
-    setDuracao(item.duracao.toString());
+    setNome(item.nome || "");
+    setPreco(item.preco ? String(item.preco) : "");
+    setDuracao(item.duracao ? String(item.duracao) : "");
     setDescricao(item.descricao || "");
-    setTipo(item.tipo);
+    setTipo(item.tipo || "SERVICO");
     setModalVisivel(true);
   }
 
-  // SALVAR (CRIAÇÃO OU EDIÇÃO)
   async function salvarServico() {
     if (!nome.trim()) {
       Alert.alert("Atenção", "Informe o nome do serviço/pacote.");
@@ -146,8 +138,10 @@ export default function Servicos() {
       return;
     }
 
-    if (!user?.id) {
-      Alert.alert("Erro", "Usuário inválido.");
+    
+    const barbeariaId = (user as any)?.barbeariaId || user?.barbeiroId || user?.id;
+    if (!barbeariaId) {
+      Alert.alert("Erro", "Identificação do estabelecimento não encontrada.");
       return;
     }
 
@@ -155,7 +149,7 @@ export default function Servicos() {
 
     try {
       const payload = {
-        barbearia_id: user.id,
+        barbearia_id: Number(barbeariaId),
         nome: nome.trim(),
         preco: valorPreco,
         duracao_minutos: valorDuracao,
@@ -176,14 +170,14 @@ export default function Servicos() {
                   descricao: descricao.trim(),
                   tipo,
                 }
-              : item,
-          ),
+              : item
+          )
         );
         Alert.alert("Sucesso", "Item atualizado com sucesso!");
       } else {
-        await servicosService.cadastrar(payload);
+        const resposta = await servicosService.cadastrar(payload);
         const novoItem: ServicoItem = {
-          id: Date.now().toString(),
+          id: resposta?.id || Date.now(),
           nome: nome.trim(),
           preco: valorPreco,
           duracao: valorDuracao,
@@ -204,7 +198,6 @@ export default function Servicos() {
     }
   }
 
-  // EXCLUIR ITEM
   function deletarServico(id: string | number) {
     Alert.alert(
       "Confirmar exclusão",
@@ -216,7 +209,7 @@ export default function Servicos() {
           style: "destructive",
           onPress: async () => {
             try {
-             await servicosService.deletar(id);
+              await servicosService.deletar(id);
               setServicos((prev) => prev.filter((item) => item.id !== id));
             } catch (error) {
               console.error("Erro ao deletar:", error);
@@ -224,11 +217,10 @@ export default function Servicos() {
             }
           },
         },
-      ],
+      ]
     );
   }
 
-  // FILTRAGEM
   const servicosFiltrados = servicos.filter((item) => {
     if (filtro === "SERVICO") return item.tipo === "SERVICO";
     if (filtro === "PACOTE") return item.tipo === "PACOTE";
@@ -252,7 +244,6 @@ export default function Servicos() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <LinearGradient
         colors={[colors.primary, colors.secondary]}
         style={styles.headerGradient}
@@ -267,7 +258,6 @@ export default function Servicos() {
           <Text style={styles.headerTitle}>Serviços & Pacotes</Text>
         </View>
 
-        {/* Abas de Filtro */}
         <View style={styles.tabContainer}>
           {(["TODOS", "SERVICO", "PACOTE"] as const).map((aba) => (
             <TouchableOpacity
@@ -284,15 +274,14 @@ export default function Servicos() {
                 {aba === "TODOS"
                   ? "Todos"
                   : aba === "SERVICO"
-                    ? "Serviços"
-                    : "Pacotes"}
+                  ? "Serviços"
+                  : "Pacotes"}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </LinearGradient>
 
-      {/* Botão Novo Item */}
       <View style={styles.actionContainer}>
         <TouchableOpacity
           style={styles.newButton}
@@ -304,7 +293,6 @@ export default function Servicos() {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de Items */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -377,7 +365,6 @@ export default function Servicos() {
         )}
       </ScrollView>
 
-      {/* Modal de Cadastro / Edição */}
       <Modal
         visible={modalVisivel}
         animationType="slide"
@@ -396,7 +383,6 @@ export default function Servicos() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Seletor de Tipo */}
               <Text style={styles.label}>Tipo de Oferta</Text>
               <View style={styles.tipoSelector}>
                 <TouchableOpacity
@@ -444,7 +430,6 @@ export default function Servicos() {
                 </TouchableOpacity>
               </View>
 
-              {/* Nome */}
               <Text style={styles.label}>Nome</Text>
               <TextInput
                 style={styles.input}
@@ -454,7 +439,6 @@ export default function Servicos() {
                 onChangeText={setNome}
               />
 
-              {/* Preço e Duração na mesma linha */}
               <View style={styles.rowInputs}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Preço (R$)</Text>
@@ -481,7 +465,6 @@ export default function Servicos() {
                 </View>
               </View>
 
-              {/* Descrição */}
               <Text style={styles.label}>Descrição (Opcional)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -493,7 +476,6 @@ export default function Servicos() {
                 onChangeText={setDescricao}
               />
 
-              {/* Botão de Ação */}
               <TouchableOpacity
                 style={[styles.saveButton, salvando && { opacity: 0.7 }]}
                 onPress={salvarServico}

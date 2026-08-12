@@ -113,7 +113,7 @@ export default function PerfilBarbeiro() {
               style={styles.menuItem}
               activeOpacity={0.7}
               onPress={() =>
-                navigation.navigate("/Barbeiro/RelatoriosFinanceiros")
+                navigation.navigate("RelatoriosFinanceiros")
               }
             >
               <View style={styles.menuItemLeft}>
@@ -133,7 +133,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("/Barbeiro/Servicos")}
+              onPress={() => navigation.navigate("Servicos")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
@@ -148,7 +148,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("/Barbeiro/HorariosTrabalho")}
+              onPress={() => navigation.navigate("HorariosTrabalho")}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
