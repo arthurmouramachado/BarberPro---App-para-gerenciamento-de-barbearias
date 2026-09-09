@@ -31,6 +31,10 @@ export class AuthService {
       sub: user.id,
       nome: user.nome,
       funcao: user.funcao,
+
+      clienteId: user.clientes?.id ?? null,
+      barbeiroId: user.barbeiros?.id ?? null,
+      barbeariaId: user.barbeiros?.barbearia_id ?? null,
     };
 
     return { access_token: await this.jwtService.signAsync(payload) };

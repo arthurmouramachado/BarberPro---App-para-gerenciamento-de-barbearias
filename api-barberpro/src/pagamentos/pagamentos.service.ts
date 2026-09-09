@@ -8,6 +8,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreatePagamentoDto } from './dto/create-pagamento.dto';
 import { UpdatePagamentoDto } from './dto/update-pagamento.dto';
@@ -40,9 +41,16 @@ export class PagamentosService {
   }
 
   async create(createPagamentoDto: CreatePagamentoDto, userPayload: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unused-vars
-    const { sub: usuarioId, funcao } = userPayload;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const sub = userPayload?.sub || userPayload?.id;
+    if (!sub) {
+      throw new UnauthorizedException(
+        'Usuário não autenticado ou token inválido.',
+      );
+    }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const funcao = userPayload?.funcao || userPayload?.role;
     if (funcao !== 'CLIENTE' && funcao !== 'ADMIN') {
       throw new ForbiddenException('Apenas clientes podem realizar pagamentos');
     }

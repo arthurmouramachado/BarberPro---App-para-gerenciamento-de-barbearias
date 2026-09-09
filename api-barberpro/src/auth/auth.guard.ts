@@ -28,6 +28,8 @@ export class AuthGuard implements CanActivate {
       }); // Verifique o token usando a chave secreta.
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       request.userId = payload; // Anexe a payload útil decodificada ao objeto de solicitação.
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      request.user = payload; // Anexe a payload útil decodificada ao objeto de solicitação.
     } catch {
       throw new UnauthorizedException('Unauthorized: Invalid token');
     }
