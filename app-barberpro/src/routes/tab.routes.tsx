@@ -1,17 +1,17 @@
 // 1. Importações do React e do Navigation
 import Feather from "@expo/vector-icons/Feather";
 import {
-    createBottomTabNavigator,
+  createBottomTabNavigator,
 } from "@react-navigation/bottom-tabs";
 import {
-    createStaticNavigation,
+  createStaticNavigation,
 } from "@react-navigation/native";
-import AgendamentosCliente from "../app/Clientes/AgendamentosCliente";
-import DetalhesBarbearia from "../app/Clientes/DetalhesBarbearia";
-import HomeCliente from "../app/Clientes/HomeCliente";
-import PerfilCliente from "../app/Clientes/PerfilCliente";
+import AgendamentosCliente from "@/app/Clientes/AgendamentosCliente";
+import DetalhesBarbearia from "@/app/Clientes/DetalhesBarbearia";
+import HomeCliente from "@/app/Clientes/HomeClienteScreen";
+import PerfilCliente from "@/app/Clientes/PerfilCliente";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import AgendarServico from "../app/Clientes/AgendarServico";
+import AgendarServico from "@/app/Clientes/AgendarServico";
 
 const MinhasAbas = createBottomTabNavigator({
   screenOptions: {

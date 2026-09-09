@@ -1,7 +1,7 @@
 import Feather from "@expo/vector-icons/Feather";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams, useRouter } from "expo-router"; // IMPORTADO O USEROUTER
+import { useLocalSearchParams, useRouter } from "expo-router"; 
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
@@ -16,23 +16,29 @@ export default function SelectScreen() {
 
   const handleContinuar = async () => {
     
+    const emailFormatado = String(email || "").trim().toLowerCase();
+    const senhaFormatada = String(senha || "").trim();
+
     if (perfilSelecionado === "cliente") {
       const payload = {
-        nome,
-        email,
-        telefone,
-        senha,
+        nome: String(nome || "").trim(),
+        email: emailFormatado,
+        telefone: String(telefone || "").trim(),
+        senha: senhaFormatada,
         data_nascimento,
         funcao: "CLIENTE", 
       };
       
       try {
-        setIsLoading(true)
-        await userService.criarUser(payload)
+        setIsLoading(true);
+        await userService.criarUser(payload);
 
         Alert.alert("Sucesso!", "Conta criada com sucesso!");
         
-        router.replace("./LoginScreen");
+        router.replace({
+          pathname: "/LoginScreen",
+          params: { emailCadastrado: emailFormatado },
+        });
       } catch(error: any) {
           Alert.alert("Erro no cadastro", error.response?.data?.message || "Ocorreu um erro ao criar a conta.");
       } finally {
@@ -41,7 +47,14 @@ export default function SelectScreen() {
     } else if (perfilSelecionado === "barbeiro") {
       router.push({
         pathname: "/SelectBarber",
-        params: { nome, email, telefone, senha, data_nascimento, funcao: "BARBEIRO" },
+        params: {
+          nome: String(nome || "").trim(),
+          email: emailFormatado,
+          telefone: String(telefone || "").trim(),
+          senha: senhaFormatada,
+          data_nascimento,
+          funcao: "BARBEIRO",
+        },
       });
     }
   };

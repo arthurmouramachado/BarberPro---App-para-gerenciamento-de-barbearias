@@ -4,17 +4,18 @@ import Feather from "@expo/vector-icons/Feather";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react"; // IMPORTADO O USESTATE
+import { useEffect, useState } from "react";
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
-import { authService } from "@/services/authService";
 
 export default function LoginScreen() {
   const router = useRouter();
 
   const { user, signIn } = useAuth();
-  const { emailCadastrado } = useLocalSearchParams<{ emailCadastrado?: string }>();
+  const { emailCadastrado } = useLocalSearchParams<{
+    emailCadastrado?: string;
+  }>();
 
   // 1. Criando os estados para monitorar o que é digitado
   const [email, setEmail] = useState(emailCadastrado || "");
@@ -30,35 +31,70 @@ export default function LoginScreen() {
     }
   }, [emailCadastrado]);
 
-  
   const handleLogin = async () => {
-    
-    if(!isFormValid) return;
-    
+    if (!isFormValid) return;
 
     try {
       setIsLoading(true);
-      const response = await authService.login(
-        email.trim().toLowerCase(), 
-        senha.trim()
-      );
-      const loginFeito = await signIn(email, senha);
+
+      const emailDigitado = email.trim();
+      const senhaTratada = senha.trim();
+
+      // Tenta o login com o email digitado; se der 404 (usuário não encontrado),
+      // tenta com lowercase ou capitalizado (compatibilidade com cadastros anteriores)
+      let loginFeito;
+      try {
+        loginFeito = await signIn(emailDigitado, senhaTratada);
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          const emailLower = emailDigitado.toLowerCase();
+          if (emailLower !== emailDigitado) {
+            loginFeito = await signIn(emailLower, senhaTratada);
+          } else {
+            const emailCapitalizado =
+              emailDigitado.charAt(0).toUpperCase() + emailDigitado.slice(1);
+            if (emailCapitalizado !== emailDigitado) {
+              loginFeito = await signIn(emailCapitalizado, senhaTratada);
+            } else {
+              throw err;
+            }
+          }
+        } else {
+          throw err;
+        }
+      }
+
       const perfil = loginFeito?.funcao;
 
       if (perfil === "CLIENTE") {
-        router.replace("./Clientes/HomeCliente");
+        router.replace("/Clientes/HomeClienteScreen" as any);
       } else if (perfil === "BARBEIRO" || perfil === "ADMIN") {
-        router.replace("./Barbeiro/HomeBarbeiro");
+        router.replace("/Barbeiro/HomeBarbeiroScreen" as any);
       }
-    } catch (error) {
-      Alert.alert("Email ou Senha Incorretos", "Tente novamente");
+    } catch (error: any) {
+      console.error(
+        "Erro no login:",
+        error?.response?.status,
+        error?.response?.data || error?.message,
+      );
+      let mensagem = "Email ou Senha Incorretos. Tente novamente.";
+      const backendMsg = error?.response?.data?.message;
+      if (
+        backendMsg === "User not found" ||
+        backendMsg === "Invalid credentials"
+      ) {
+        mensagem = "Email ou senha incorretos. Verifique seus dados.";
+      } else if (typeof backendMsg === "string") {
+        mensagem = backendMsg;
+      }
+      Alert.alert("Erro no Login", mensagem);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const handleForgotPassword = () => {
-    alert("Email para redefinir senha enviado!");
+    Alert.alert("Redefinir Senha", "Email para redefinir senha enviado!");
   };
 
   return (
@@ -79,9 +115,11 @@ export default function LoginScreen() {
           placeholder="Email"
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
           style={styles.input}
-          value={email} // Vincula o valor ao estado
-          onChangeText={setEmail} // Atualiza o estado ao digitar
+          value={email}
+          onChangeText={setEmail}
         />
       </View>
 
@@ -90,10 +128,12 @@ export default function LoginScreen() {
         <Input
           placeholder="Senha"
           placeholderTextColor="#9CA3AF"
+          autoCapitalize="none"
+          autoCorrect={false}
           style={styles.input}
           secureTextEntry
-          value={senha} // Vincula o valor ao estado
-          onChangeText={setSenha} // Atualiza o estado ao digitar
+          value={senha}
+          onChangeText={setSenha}
         />
       </View>
 
@@ -105,20 +145,24 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       {/* O botão recebe dinamicamente o resultado da validação */}
-      <Button label="Entrar" style={styles.button} isActive={isFormValid && !isLoading} onPress={handleLogin} />
+      <Button
+        label="Entrar"
+        style={styles.button}
+        isActive={isFormValid && !isLoading}
+        onPress={handleLogin}
+      />
 
       <View style={styles.signUpContainer}>
         <Text style={styles.signUpText}>Não tem conta? </Text>
-        <TouchableOpacity activeOpacity={0.8}>
-          <Text style={styles.signUpLink}>
-            <Link href={"./SingupScreen"}>Cadastre-se</Link>
-          </Text>
-        </TouchableOpacity>
+        <Link href="/SingupScreen" asChild>
+          <TouchableOpacity activeOpacity={0.8}>
+            <Text style={styles.signUpLink}>Cadastre-se</Text>
+          </TouchableOpacity>
+        </Link>
       </View>
     </LinearGradient>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

@@ -31,11 +31,13 @@ export const servicosService = {
   async listarTodas(barbeariaId: number): Promise<ServicoDTO[]> {
     const response = await api.get<ServicoDTO[]>("/servicos", {
       params: {
-        barbearia_id: barbeariaId,
+        barbeariaId: barbeariaId,
       },
     });
+
     return response.data;
   },
+
   async atualizar(id: number | string, servico: Partial<CriarServicoDTO>): Promise<ServicoDTO> {
     const response = await api.patch<ServicoDTO>(`/servicos/${id}`, servico);
     return response.data;
@@ -45,7 +47,7 @@ export const servicosService = {
     console.log("--> ID enviado para busca:", barbeiroId);
     console.log("--> Rota chamada:", `/servicos/barbeiro/${barbeiroId}`);
 
-    const response = await api.get<ServicoDTO[]>(`/servicos/${barbeiroId}`);
+    const response = await api.get<ServicoDTO[]>(`/servicos/barbeiro/${barbeiroId}`);
     return response.data;
   },
 

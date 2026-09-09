@@ -33,11 +33,14 @@
       "expo-router",
       "expo-font",
       [
-      "expo-location",
+        "expo-location",
         {
           "locationWhenInUsePermission": "O BarberPro precisa do seu GPS para encontrar as barbearias mais próximas do seu endereço."
         }
-      ]
+      ],
+      "expo-splash-screen",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true

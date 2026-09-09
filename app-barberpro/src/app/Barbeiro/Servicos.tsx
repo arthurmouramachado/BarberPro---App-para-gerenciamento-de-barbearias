@@ -61,7 +61,7 @@ export default function Servicos() {
   const [tipo, setTipo] = useState<"SERVICO" | "PACOTE">("SERVICO");
 
   async function carregarServicos() {
-    const barbeiroId = user?.barbeiroId || user?.id;
+    const barbeiroId = user?.barbeiroId;
     if (!barbeiroId) {
       console.warn("Nenhum ID de barbeiro disponível no contexto do usuário.");
       setLoading(false);
@@ -69,21 +69,25 @@ export default function Servicos() {
     }
 
     try {
+      setLoading(true);
+
+      console.log("Barbeiro ID correto:", barbeiroId);
+
       const dados = await servicosService.listarPorBarbeiro(barbeiroId);
 
       setServicos(
         dados.map((item: any) => ({
           id: item.id,
           nome: item.nome,
-          preco: item.preco,
-          duracao: item.duracao || item.duracao_minutos || item.duracaoMinutos || 0,
+          preco: Number(item.preco),
+          duracao: item.duracao_minutos || item.duracao || item.duracaoMinutos || 0,
           descricao: item.descricao,
           tipo: (item.tipo || "SERVICO") as "SERVICO" | "PACOTE",
           ativo: item.ativo,
         }))
       );
-    } catch (error) {
-      console.error("Erro ao carregar serviços:", error);
+    } catch (error: any) {
+      console.error("Erro ao carregar serviços:", error?.response?.status, error?.response?.data);
       Alert.alert("Erro", "Não foi possível carregar a lista de serviços.");
     } finally {
       setLoading(false);
@@ -139,9 +143,9 @@ export default function Servicos() {
     }
 
     
-    const barbeariaId = (user as any)?.barbeariaId || user?.barbeiroId || user?.id;
+    const barbeariaId = user?.barbeariaId;
     if (!barbeariaId) {
-      Alert.alert("Erro", "Identificação do estabelecimento não encontrada.");
+      Alert.alert("Erro", "A barbearia vinculada ao seu usuário não foi encontrada.");
       return;
     }
 
@@ -149,7 +153,7 @@ export default function Servicos() {
 
     try {
       const payload = {
-        barbearia_id: Number(barbeariaId),
+        barbearia_id: barbeariaId,
         nome: nome.trim(),
         preco: valorPreco,
         duracao_minutos: valorDuracao,
@@ -259,7 +263,7 @@ export default function Servicos() {
         </View>
 
         <View style={styles.tabContainer}>
-          {(["TODOS", "SERVICO", "PACOTE"] as const).map((aba) => (
+          {([ "SERVICO", "PACOTE"] as const).map((aba) => (
             <TouchableOpacity
               key={aba}
               style={[
@@ -271,9 +275,7 @@ export default function Servicos() {
               <Text
                 style={[styles.tabText, filtro === aba && styles.tabTextActive]}
               >
-                {aba === "TODOS"
-                  ? "Todos"
-                  : aba === "SERVICO"
+                {aba === "SERVICO"
                   ? "Serviços"
                   : "Pacotes"}
               </Text>

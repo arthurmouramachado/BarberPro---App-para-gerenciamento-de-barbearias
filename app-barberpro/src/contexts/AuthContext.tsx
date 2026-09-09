@@ -11,6 +11,7 @@ interface User {
   funcao: string;
   clienteId?: number; 
   barbeiroId?: number;
+  barbeariaId?: number;
 }
 
 interface AuthContextData {
@@ -28,6 +29,7 @@ interface TokenPayload {
   exp: number,
   clienteId?: number;
   barbeiroId?: number;
+  barbeariaId?: number;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -56,19 +58,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const data = await authService.login(email, pass);
     const token = data.access_token;
 
-    const decodedPayload: TokenPayload = jwtDecode(token);
+    const decodedPayload: any = jwtDecode(token);
  
     const loggedUser: User = {
-      id: decodedPayload.sub,
-      nome: decodedPayload.nome,
+      id: decodedPayload.sub || decodedPayload.id,
+      nome: decodedPayload.nome || decodedPayload.name || "",
       email: email,
-      funcao: decodedPayload.funcao,
-      clienteId: decodedPayload.clienteId,
-      barbeiroId: decodedPayload.barbeiroId,
+      funcao: decodedPayload.funcao || decodedPayload.role,
+
+      clienteId:
+        decodedPayload.clienteId ??
+        decodedPayload.cliente_id ??
+        decodedPayload.cliente?.id,
+
+      barbeiroId:
+        decodedPayload.barbeiroId ??
+        decodedPayload.barbeiro_id ??
+        decodedPayload.barbeiro?.id,
+
+      barbeariaId:
+        decodedPayload.barbeariaId ??
+        decodedPayload.barbearia_id ??
+        decodedPayload.barbearia?.id,
     };
 
     setUser(loggedUser);
-
 
     await AsyncStorage.setItem('@BarberPro:token', token);
     await AsyncStorage.setItem('@BarberPro:user', JSON.stringify(loggedUser));

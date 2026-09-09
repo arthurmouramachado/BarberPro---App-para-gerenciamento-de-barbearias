@@ -1,5 +1,6 @@
 // 1. Importações do React e do Navigation
 import AgendaBarbeiro from "@/app/Barbeiro/AgendaBarbeiro";
+import ExcluirBarbeiroAdmin from "@/app/Barbeiro/ExcluirBarbeiroAdmin";
 import HorariosTrabalho from "@/app/Barbeiro/HorariosTrabalho";
 import PerfilBarbeiro from "@/app/Barbeiro/PerfilBarbeiro";
 import RelatoriosFinanceiros from "@/app/Barbeiro/RelatoriosFinanceiros";
@@ -8,8 +9,7 @@ import Feather from "@expo/vector-icons/Feather";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStaticNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeBarbeiro from "../app/Barbeiro/HomeBarbeiro";
-import ExcluirBarbeiroAdmin from "@/app/Barbeiro/ExcluirBarbeiroAdmin";
+import HomeBarbeiro from "../app/Barbeiro/HomeBarbeiroScreen";
 
 const AbasBarbeiro = createBottomTabNavigator({
   screenOptions: {
@@ -39,9 +39,8 @@ const AbasBarbeiro = createBottomTabNavigator({
       },
     },
 
-   
     AgendaBarbeiro: {
-      screen: AgendaBarbeiro, 
+      screen: AgendaBarbeiro,
       options: {
         tabBarLabel: "Agenda",
         tabBarIcon: ({ color, size }) => (
@@ -51,7 +50,7 @@ const AbasBarbeiro = createBottomTabNavigator({
     },
 
     PerfilBarbeiro: {
-      screen: PerfilBarbeiro, 
+      screen: PerfilBarbeiro,
       options: {
         tabBarLabel: "Perfil",
         tabBarIcon: ({ color, size }) => (

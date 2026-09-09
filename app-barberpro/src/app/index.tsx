@@ -42,9 +42,5 @@ export default function Index() {
 
   if (showSplash) return <SplashScreen />;
 
-  return (
-    <AuthProvider>
-      <LoginScreen/>
-    </AuthProvider>
-  );
+  return <LoginScreen />;
 }

@@ -137,15 +137,6 @@ export default function RelatoriosFinanceiros() {
             </Text>
           </View>
 
-          <View style={styles.miniCard}>
-            <View style={styles.iconCircle}>
-              <Feather name="pie-chart" size={18} color={colors.primary} />
-            </View>
-            <Text style={styles.miniCardLabel}>Ticket Médio</Text>
-            <Text style={styles.miniCardValue}>
-              {formatarMoeda(relatorio?.ticketMedio || 0)}
-            </Text>
-          </View>
         </View>
 
         {/* Histórico de Entradas */}
@@ -260,6 +251,7 @@ const styles = StyleSheet.create({
   },
   miniCard: {
     flex: 1,
+    alignItems: "center",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,

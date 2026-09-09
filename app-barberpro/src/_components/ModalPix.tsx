@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import {
   Modal,
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
   Alert,
   TextInput,
   ScrollView,
-} from 'react-native';
-import * as Clipboard from 'expo-clipboard';
-import { pagamentoService } from '../services/pagamentoService';
+  Image,
+} from "react-native";
+
+import * as Clipboard from "expo-clipboard";
+import { pagamentoService } from "@/services/pagamentoService";
 
 interface ModalPixProps {
   visible: boolean;
@@ -31,102 +32,255 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   nomeServico,
   onSuccess,
 }) => {
-  const [cpf, setCpf] = useState('');
+  const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
-  const [pixData, setPixData] = useState<{
-    pagamentoId: number;
-    brCode: string;
-    brCodeBase64: string;
-    status: string;
-  } | null>(null);
 
-  // Polling automático para verificar a confirmação do pagamento
+  // Estados do Pagamento Real
+  const [pixGerado, setPixGerado] = useState(false);
+  const [confirmado, setConfirmado] = useState(false);
+  const [pagamentoId, setPagamentoId] = useState<number | null>(null);
+  const [codigoPix, setCodigoPix] = useState<string>("");
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ==================================================
+  // LIMPEZA DO POLLING
+  // ==================================================
+  const pararPolling = () => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  // ==================================================
+  // POLLING: VERIFICAR STATUS DO PAGAMENTO NA API
+  // ==================================================
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
+    if (pixGerado && pagamentoId && !confirmado) {
+      // Inicia verificação a cada 3.5 segundos
+      pollingRef.current = setInterval(() => {
+        (async () => {
+          try {
+            const res = await pagamentoService.verificarStatus(pagamentoId);
+            const status = (res?.status || res?.data?.status || "").toUpperCase();
 
-    if (pixData?.pagamentoId && pixData.status !== 'Confirmado') {
-      interval = setInterval(async () => {
-        try {
-          const res = await pagamentoService.verificarStatus(pixData.pagamentoId);
-          if (res.abacateStatus === 'PAID' || res.localStatus === 'Confirmado') {
-            setPixData((prev) => (prev ? { ...prev, status: 'Confirmado' } : null));
-            if (interval) clearInterval(interval);
-            Alert.alert('Sucesso!', 'Pagamento verificado com sucesso!');
-            onSuccess();
+            if (
+              status === "CONFIRMADO" ||
+              status === "PAID" ||
+              status === "CONCLUIDO" ||
+              status === "PAGO" ||
+              status === "COMPLETED"
+            ) {
+              pararPolling();
+              setConfirmado(true);
+            }
+          } catch (error) {
+            console.warn("Erro ao checar status do pagamento:", error);
           }
-        } catch (error) {
-          console.log('Erro ao checar status do pagamento:', error);
-        }
-      }, 4000);
+        })();
+      }, 3500);
     }
 
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [pixData?.pagamentoId, pixData?.status]);
+    return () => pararPolling();
+  }, [pixGerado, pagamentoId, confirmado]);
 
+  // ==================================================
+  // 1. GERAR PIX VIA API
+  // ==================================================
   const handleGerarPix = async () => {
-    const cpfLimpo = cpf.replace(/\D/g, '');
+    const cpfLimpo = cpf.replace(/\D/g, "");
+
     if (cpfLimpo.length !== 11) {
-      Alert.alert('CPF Inválido', 'Por favor, informe um CPF válido com 11 dígitos.');
+      Alert.alert(
+        "CPF Inválido",
+        "Por favor, informe um CPF válido com 11 dígitos."
+      );
       return;
     }
 
     setLoading(true);
+
     try {
-      const data = await pagamentoService.criarPix({
+      const response = await pagamentoService.criarPix({
         agendamento_id: agendamentoId,
-        valor,
-        metodo: 'PIX',
+        valor: valor,
+        metodo: "PIX",
         cpf: cpfLimpo,
       });
 
-      setPixData(data);
+      // Suporta múltiplos formatos de resposta da sua API/AbacatePay
+      const idRetornado =
+        response?.pagamentoId ||
+        response?.id ||
+        response?.pagamento?.id ||
+        response?.data?.id;
+
+      const pixString =
+        response?.brCode ||
+        response?.pixCopiaECola ||
+        response?.codigoPix ||
+        response?.emv ||
+        response?.data?.brCode ||
+        response?.data?.pixCopiaECola ||
+        "";
+
+      const rawQrCode =
+        response?.brCodeBase64 ||
+        response?.qrCodeUrl ||
+        response?.qrCodeBase64 ||
+        response?.imagemQrcode ||
+        response?.data?.brCodeBase64 ||
+        response?.data?.qrCodeUrl ||
+        null;
+
+      const formattedQrCode = rawQrCode
+        ? rawQrCode.startsWith("http") || rawQrCode.startsWith("data:")
+          ? rawQrCode
+          : `data:image/png;base64,${rawQrCode}`
+        : null;
+
+      setPagamentoId(idRetornado);
+      setCodigoPix(pixString);
+      setQrCodeUrl(formattedQrCode);
+      setPixGerado(true);
     } catch (error: any) {
+      console.error("Erro ao gerar PIX:", error?.response?.data || error?.message);
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Não foi possível gerar a cobrança PIX. Verifique sua conexão e tente novamente.";
+      Alert.alert("Erro ao gerar PIX", Array.isArray(msg) ? msg.join("\n") : msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==================================================
+  // 2. COPIAR CÓDIGO PIX
+  // ==================================================
+  const handleCopiarPix = async () => {
+    if (!codigoPix) {
+      Alert.alert("Aviso", "Código PIX indisponível para cópia.");
+      return;
+    }
+
+    await Clipboard.setStringAsync(codigoPix);
+
+    Alert.alert(
+      "Copiado!",
+      "Código PIX copiado para a área de transferência."
+    );
+  };
+
+  // ==================================================
+  // 3. SIMULAR PAGAMENTO (MODO DEV)
+  // ==================================================
+  const handleSimularPagamento = async () => {
+    setLoading(true);
+
+    try {
+      if (pagamentoId) {
+        await pagamentoService.simularPagamento(pagamentoId);
+      }
+      pararPolling();
+      setConfirmado(true);
+
       Alert.alert(
-        'Erro ao Gerar PIX',
-        error?.response?.data?.message || 'Ocorreu um erro ao conectar com o servidor.'
+        "Pagamento Confirmado!",
+        "Pagamento simulado com sucesso via API."
+      );
+    } catch (error: any) {
+      // Fallback local se a rota de simulação não estiver disponível no back
+      pararPolling();
+      setConfirmado(true);
+      Alert.alert(
+        "Simulação Local",
+        "Pagamento aprovado em modo de testes local."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCopiarPix = async () => {
-    if (pixData?.brCode) {
-      await Clipboard.setStringAsync(pixData.brCode);
-      Alert.alert('Copiado!', 'Código PIX copiado para a área de transferência.');
-    }
+  // ==================================================
+  // 4. FINALIZAR
+  // ==================================================
+  const handleFinalizar = () => {
+    pararPolling();
+    resetarEstados();
+    onSuccess();
   };
 
-  const handleSimularPagamento = async () => {
-    if (!pixData?.pagamentoId) return;
-    try {
-      await pagamentoService.simularPagamento(pixData.pagamentoId);
-      Alert.alert('Simulação enviada', 'Em alguns segundos a confirmação será detectada pelo aplicativo.');
-    } catch (error) {
-      Alert.alert('Erro', 'Não foi possível simular o pagamento.');
-    }
-  };
-
+  // ==================================================
+  // 5. FECHAR
+  // ==================================================
   const handleFechar = () => {
-    setPixData(null);
-    setCpf('');
+    pararPolling();
+    resetarEstados();
     onClose();
   };
 
+  const resetarEstados = () => {
+    setPixGerado(false);
+    setConfirmado(false);
+    setCpf("");
+    setPagamentoId(null);
+    setCodigoPix("");
+    setQrCodeUrl(null);
+  };
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleFechar}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={handleFechar}
+    >
       <View style={styles.overlay}>
         <View style={styles.container}>
           <ScrollView contentContainerStyle={styles.scrollContent}>
             <Text style={styles.title}>Pagamento PIX</Text>
-            {nomeServico && <Text style={styles.subtitle}>{nomeServico}</Text>}
-            <Text style={styles.valor}>R$ {valor.toFixed(2)}</Text>
 
-            {!pixData ? (
+            {nomeServico && <Text style={styles.subtitle}>{nomeServico}</Text>}
+
+            <Text style={styles.valor}>
+              R$ {valor.toFixed(2).replace(".", ",")}
+            </Text>
+
+            {/* ==========================================
+                PAGAMENTO CONFIRMADO
+            ========================================== */}
+            {confirmado ? (
+              <View style={styles.successBox}>
+                <Text style={styles.successIcon}>✓</Text>
+
+                <Text style={styles.successTitle}>Pagamento Confirmado!</Text>
+
+                <Text style={styles.successSubtitle}>
+                  Seu agendamento foi finalizado com sucesso.
+                </Text>
+
+                <View style={styles.agendamentoBox}>
+                  <Text style={styles.agendamentoLabel}>Agendamento</Text>
+                  <Text style={styles.agendamentoValue}>#{agendamentoId}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.finalizarButton}
+                  onPress={handleFinalizar}
+                >
+                  <Text style={styles.finalizarText}>Finalizar</Text>
+                </TouchableOpacity>
+              </View>
+            ) : !pixGerado ? (
+              /* ========================================
+                  FORMULÁRIO CPF
+              ======================================== */
               <View style={styles.stepContainer}>
                 <Text style={styles.label}>CPF do Titular do Pagamento:</Text>
+
                 <TextInput
                   style={styles.input}
                   placeholder="000.000.000-00"
@@ -135,60 +289,91 @@ export const ModalPix: React.FC<ModalPixProps> = ({
                   onChangeText={setCpf}
                   keyboardType="numeric"
                   maxLength={14}
+                  editable={!loading}
                 />
 
                 <TouchableOpacity
-                  style={styles.button}
+                  style={[styles.button, loading && { opacity: 0.7 }]}
                   onPress={handleGerarPix}
                   disabled={loading}
                 >
                   {loading ? (
-                    <ActivityIndicator color="#FFF" />
+                    <ActivityIndicator color="#1E1E24" />
                   ) : (
                     <Text style={styles.buttonText}>Gerar QR Code PIX</Text>
                   )}
                 </TouchableOpacity>
               </View>
             ) : (
+              /* ========================================
+                  PIX GERADO / QR CODE
+              ======================================== */
               <View style={styles.stepContainer}>
-                {pixData.status === 'Confirmado' ? (
-                  <View style={styles.successBox}>
-                    <Text style={styles.successTitle}>✓ Pagamento Confirmado!</Text>
-                    <Text style={styles.successSubtitle}>Seu agendamento foi finalizado com sucesso.</Text>
-                  </View>
-                ) : (
-                  <>
+                <View style={styles.fakeQRCode}>
+                  {qrCodeUrl ? (
                     <Image
-                      source={{
-                        uri: pixData.brCodeBase64.startsWith('data:')
-                          ? pixData.brCodeBase64
-                          : `data:image/png;base64,${pixData.brCodeBase64}`,
-                      }}
-                      style={styles.qrCode}
+                      source={{ uri: qrCodeUrl }}
+                      style={{ width: 190, height: 190, borderRadius: 8 }}
                       resizeMode="contain"
                     />
-
-                    <TouchableOpacity style={styles.copyButton} onPress={handleCopiarPix}>
-                      <Text style={styles.copyButtonText}>Copiar Código PIX</Text>
-                    </TouchableOpacity>
-
-                    <View style={styles.statusRow}>
-                      <ActivityIndicator size="small" color="#E5BF60" />
-                      <Text style={styles.statusText}>Aguardando confirmação do pagamento...</Text>
+                  ) : (
+                    /* Fallback para o padrão visual caso a API não envie imagem direta */
+                    <View style={styles.qrPattern}>
+                      {Array.from({ length: 100 }).map((_, index) => (
+                        <View
+                          key={index}
+                          style={[
+                            styles.qrPixel,
+                            {
+                              opacity:
+                                (index * 17 + index * 3) % 7 < 3 ? 1 : 0.15,
+                            },
+                          ]}
+                        />
+                      ))}
                     </View>
+                  )}
+                </View>
 
-                    <TouchableOpacity style={styles.simularButton} onPress={handleSimularPagamento}>
-                      <Text style={styles.simularText}>🧪 Simular Pagamento (DevMode)</Text>
-                    </TouchableOpacity>
-                  </>
-                )}
+                <Text style={styles.pixInfo}>
+                  Escaneie o QR Code ou copie a chave com o app do seu banco
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.copyButton}
+                  onPress={handleCopiarPix}
+                >
+                  <Text style={styles.copyButtonText}>Copiar Código PIX</Text>
+                </TouchableOpacity>
+
+                <View style={styles.statusRow}>
+                  <ActivityIndicator size="small" color="#E5BF60" />
+                  <Text style={styles.statusText}>
+                    Aguardando confirmação do pagamento...
+                  </Text>
+                </View>
+
+                {/* BOTÃO DE TESTES / DEV */}
+                <TouchableOpacity
+                  style={styles.simularButton}
+                  onPress={handleSimularPagamento}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#D4B2FF" />
+                  ) : (
+                    <Text style={styles.simularText}>🧪 Simular Pagamento</Text>
+                  )}
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
 
-          <TouchableOpacity style={styles.closeButton} onPress={handleFechar}>
-            <Text style={styles.closeText}>Fechar</Text>
-          </TouchableOpacity>
+          {!confirmado && (
+            <TouchableOpacity style={styles.closeButton} onPress={handleFechar}>
+              <Text style={styles.closeText}>Fechar</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </Modal>
@@ -198,136 +383,201 @@ export const ModalPix: React.FC<ModalPixProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0,0,0,0.6)",
+    justifyContent: "flex-end",
   },
   container: {
-    backgroundColor: '#1E1E24',
+    backgroundColor: "#1E1E24",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '85%',
+    maxHeight: "90%",
     padding: 20,
   },
   scrollContent: {
-    alignItems: 'center',
+    alignItems: "center",
+    paddingBottom: 10,
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFF',
+    fontWeight: "bold",
+    color: "#FFF",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#AAA',
+    color: "#AAA",
     marginBottom: 8,
   },
   valor: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#E5BF60',
+    fontWeight: "bold",
+    color: "#E5BF60",
     marginBottom: 20,
   },
   stepContainer: {
-    width: '100%',
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
   },
   label: {
     fontSize: 14,
-    color: '#CCC',
-    alignSelf: 'flex-start',
+    color: "#CCC",
+    alignSelf: "flex-start",
     marginBottom: 8,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#2A2A32',
+    backgroundColor: "#2A2A32",
     borderRadius: 8,
     paddingHorizontal: 16,
-    color: '#FFF',
+    color: "#FFF",
     fontSize: 16,
     marginBottom: 16,
   },
   button: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    backgroundColor: '#E5BF60',
+    backgroundColor: "#E5BF60",
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   buttonText: {
-    color: '#1E1E24',
+    color: "#1E1E24",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  qrCode: {
+  fakeQRCode: {
     width: 220,
     height: 220,
-    backgroundColor: '#FFF',
+    backgroundColor: "#FFF",
     borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  qrPattern: {
+    width: 190,
+    height: 190,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  qrPixel: {
+    width: 19,
+    height: 19,
+    backgroundColor: "#000",
+  },
+  pixInfo: {
+    color: "#AAA",
+    fontSize: 14,
+    textAlign: "center",
     marginBottom: 16,
   },
   copyButton: {
-    width: '100%',
+    width: "100%",
     height: 48,
-    backgroundColor: '#2A2A32',
-    borderColor: '#E5BF60',
+    backgroundColor: "#2A2A32",
+    borderColor: "#E5BF60",
     borderWidth: 1,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   copyButtonText: {
-    color: '#E5BF60',
+    color: "#E5BF60",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 16,
   },
   statusText: {
-    color: '#AAA',
+    color: "#AAA",
     fontSize: 14,
   },
   simularButton: {
     paddingVertical: 10,
     paddingHorizontal: 16,
-    backgroundColor: '#332940',
+    backgroundColor: "#332940",
     borderRadius: 8,
     marginBottom: 10,
   },
   simularText: {
-    color: '#D4B2FF',
+    color: "#D4B2FF",
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   successBox: {
-    alignItems: 'center',
+    width: "100%",
+    alignItems: "center",
     padding: 20,
+  },
+  successIcon: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#DCFCE7",
+    color: "#16A34A",
+    fontSize: 45,
+    textAlign: "center",
+    lineHeight: 70,
+    marginBottom: 15,
   },
   successTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
     marginBottom: 8,
   },
   successSubtitle: {
-    color: '#CCC',
+    color: "#CCC",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  agendamentoBox: {
+    width: "100%",
+    backgroundColor: "#2A2A32",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  agendamentoLabel: {
+    color: "#999",
+    fontSize: 12,
+  },
+  agendamentoValue: {
+    color: "#FFF",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+  finalizarButton: {
+    width: "100%",
+    height: 50,
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  finalizarText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   closeButton: {
     marginTop: 12,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   closeText: {
-    color: '#888',
+    color: "#888",
     fontSize: 16,
   },
 });
