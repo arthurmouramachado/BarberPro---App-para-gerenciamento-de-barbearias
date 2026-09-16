@@ -74,7 +74,7 @@ export class AgendamentosService {
         data: new Date(data),
         hora_inicio: horaInicioAgendamento,
         hora_fim: horaFimAgendamento,
-        status,
+        status: String(status ?? 'PENDENTE').toUpperCase(),
       },
     });
 
@@ -156,8 +156,7 @@ export class AgendamentosService {
         clientes: true,
         servicos: true,
       },
-      take: 10,
-      orderBy: { data: 'desc' },
+      orderBy: [{ data: 'desc' }, { hora_inicio: 'desc' }],
     });
   }
 

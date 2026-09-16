@@ -41,6 +41,11 @@ export class PagamentosService {
   }
 
   async create(createPagamentoDto: CreatePagamentoDto, userPayload: any) {
+    const apiKey = process.env.ABACATE_API_KEY?.trim();
+
+    this.logger.log(
+      `ABACATE_API_KEY carregada: ${Boolean(apiKey)} | tamanho: ${apiKey?.length ?? 0}`,
+    );
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const sub = userPayload?.sub || userPayload?.id;
     if (!sub) {
@@ -94,7 +99,7 @@ export class PagamentosService {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.ABACATE_API_KEY}`,
+            Authorization: `Bearer ${apiKey}`,
           },
           body: JSON.stringify({
             method: 'PIX',

@@ -16,7 +16,7 @@ model agendamentos {
   data        DateTime    @db.Date
   hora_inicio DateTime    @db.Time(6)
   hora_fim    DateTime    @db.Time(6)
-  status      String?     @default("Pendente") @db.VarChar(20)
+  status      String?     @default("PENDENTE") @db.VarChar(20)
   criado_em   DateTime?   @default(now()) @db.Timestamp(6)
   barbeiros   barbeiros   @relation(fields: [barbeiro_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_agend_barbeiro")
   clientes    clientes    @relation(fields: [cliente_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_agend_cliente")
