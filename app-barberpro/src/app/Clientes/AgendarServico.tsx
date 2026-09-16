@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { Calendar, DateData, LocaleConfig } from "react-native-calendars";
-import { useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 
 import { Button } from "@/_components/Button";
 import { ModalPix } from "@/_components/ModalPix";
@@ -23,6 +23,7 @@ import { agendamentosService } from "@/services/agendamentosService";
 import { clienteService } from "@/services/clienteService";
 
 import { ptBR } from "@/utils/localeCalendarConfig";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // ======================================================
 // CONFIGURAÇÃO DO CALENDÁRIO
@@ -31,8 +32,9 @@ LocaleConfig.locales["pt-br"] = ptBR;
 LocaleConfig.defaultLocale = "pt-br";
 
 export default function AgendarServico() {
-  const navigation = useNavigation<any>();
+  const router = useRouter();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // ====================================================
   // CONTEXTO DE AGENDAMENTO
@@ -46,6 +48,8 @@ export default function AgendarServico() {
     selecionarData,
     dataSelecionada: dataSelecionadaContexto,
   } = useAgendamento();
+
+  const exigePagamentoPix = planoIdContexto != null;
 
   const hojeString = new Date().toISOString().split("T")[0];
 
@@ -147,10 +151,19 @@ export default function AgendarServico() {
   // ====================================================
   useEffect(() => {
     async function carregarServico() {
-      const idServico = servicoIdContexto || planoIdContexto || 1;
+      const idSelecionado = servicoIdContexto ?? planoIdContexto;
+
+      if (!idSelecionado) {
+        Alert.alert(
+          "Erro",
+          "Nenhum serviço ou plano foi selecionado.",
+        );
+        return;
+      }
+
       setIsLoadingServico(true);
       try {
-        const dados = await servicosService.buscarPorId(idServico);
+        const dados = await servicosService.buscarPorId(Number(idSelecionado));
         if (dados) {
           setServicoApi(dados);
         }
@@ -173,11 +186,20 @@ export default function AgendarServico() {
 
       setIsLoadingHorarios(true);
       try {
-        const idServico = servicoIdContexto || planoIdContexto || 1;
+        const idSelecionado = servicoIdContexto ?? planoIdContexto;
+
+        if (!idSelecionado) {
+          Alert.alert(
+            "Erro",
+            "Nenhum serviço ou plano foi selecionado.",
+          );
+          return;
+        }
+
         const slots = await barbeiroService.obterHorariosDisponiveis(
           barbeiroSelecionado,
           dataSelecionada,
-          idServico
+          Number(idSelecionado)
         );
 
         if (Array.isArray(slots) && slots.length > 0) {
@@ -242,7 +264,7 @@ export default function AgendarServico() {
       const fimM = String(totalMinutos % 60).padStart(2, "0");
       const horaFimFormatada = `${fimH}:${fimM}:00`;
 
-      const idServico = Number(servicoApi?.id || servicoIdContexto || 1);
+      const idServico = Number(servicoApi?.id || servicoIdContexto || planoIdContexto);
       const precoFinal = Number(servicoApi?.preco || 0);
 
       // 2. Criar Agendamento Real na API
@@ -253,7 +275,7 @@ export default function AgendarServico() {
         data: dataSelecionada,
         hora_inicio: horaInicioFormatada,
         hora_fim: horaFimFormatada,
-        status: "PENDENTE",
+        status: exigePagamentoPix ? "PENDENTE" : "CONFIRMADO",
       });
 
       const idRetornado =
@@ -266,6 +288,21 @@ export default function AgendarServico() {
       }
 
       // 3. Abre o ModalPix com o agendamento real
+      if (!exigePagamentoPix) {
+        Alert.alert(
+          "Agendamento confirmado!",
+          "Seu horário foi reservado. O pagamento do serviço avulso será realizado na barbearia.",
+          [
+            {
+              text: "Ver meus agendamentos",
+              onPress: () =>
+                router.replace("/Clientes/(tabs)/AgendamentosCliente" as any),
+            },
+          ],
+        );
+        return;
+      }
+
       setAgendamentoCriado({
         id: idRetornado,
         valor: precoFinal,
@@ -530,7 +567,7 @@ export default function AgendarServico() {
         {/* ==================================================
             BOTÃO CONFIRMAR
         ================================================== */}
-        <View style={styles.footerContainer}>
+        <View style={[styles.footerContainer, {height: 64 + insets.bottom}]}>
           <Button
             label={isSubmitting ? "Processando..." : "Confirmar Agendamento"}
             isActive={!!horarioSelecionado && !isSubmitting}
@@ -542,7 +579,7 @@ export default function AgendarServico() {
       {/* ==================================================
           MODAL PIX
       ================================================== */}
-      {agendamentoCriado && (
+      {exigePagamentoPix && agendamentoCriado && (
         <ModalPix
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
@@ -557,7 +594,7 @@ export default function AgendarServico() {
               [
                 {
                   text: "OK",
-                  onPress: () => navigation.goBack(),
+                  onPress: () => router.back(),
                 },
               ]
             );

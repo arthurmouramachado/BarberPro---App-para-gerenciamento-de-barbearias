@@ -64,7 +64,13 @@ export const ModalPix: React.FC<ModalPixProps> = ({
         (async () => {
           try {
             const res = await pagamentoService.verificarStatus(pagamentoId);
-            const status = (res?.status || res?.data?.status || "").toUpperCase();
+            const status = String(
+              res?.status ??
+                res?.localStatus ??
+                res?.abacateStatus ??
+                res?.data?.status ??
+                "",
+            ).toUpperCase();
 
             if (
               status === "CONFIRMADO" ||

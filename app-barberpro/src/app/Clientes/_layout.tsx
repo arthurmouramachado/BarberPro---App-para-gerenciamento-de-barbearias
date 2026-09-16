@@ -1,16 +1,32 @@
+import { Redirect, Stack } from "expo-router";
 import { AgendamentoProvider } from "@/contexts/AgendamentoContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { NavigationIndependentTree } from "@react-navigation/native";
-import { NavegacaoPrincipal } from "@/routes/tab.routes";
+import { useAuth } from "@/contexts/AuthContext";
+import { ActivityIndicator, View } from "react-native";
 
-export default function _layout() {
+export default function ClienteLayout() {
+
+  const { signed, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#155DFC" />
+      </View>
+    );
+  }
+
+  if (!signed) {
+    return <Redirect href="/LoginScreen" />;
+  }
+
+
   return (
-    <NavigationIndependentTree>
-      <AuthProvider>
-        <AgendamentoProvider>
-          <NavegacaoPrincipal />
-        </AgendamentoProvider>
-      </AuthProvider>
-    </NavigationIndependentTree>
+    <AgendamentoProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="DetalhesBarbearia" />
+        <Stack.Screen name="AgendarServico" />
+      </Stack>
+    </AgendamentoProvider>
   );
 }

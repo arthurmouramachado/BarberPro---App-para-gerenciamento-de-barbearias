@@ -1,6 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useRoute } from "@react-navigation/native";
-import { useNavigation } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -50,8 +49,8 @@ export type BarbeariaDetalhes = {
 // ======================================================
 
 export default function DetalhesBarbearia() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
 
   const {
     barbeariaId,
@@ -63,7 +62,7 @@ export default function DetalhesBarbearia() {
   } = useAgendamento();
 
   // ID da barbearia: capturado via parâmetro de rota ou pelo contexto
-  const idDaBarbearia = route.params?.id || barbeariaId;
+  const idDaBarbearia = id ? Number(id) : barbeariaId || null;
 
   // ====================================================
   // ESTADOS
@@ -273,12 +272,8 @@ export default function DetalhesBarbearia() {
       return;
     }
 
-    if (barbearia?.id) {
-      selecionarBarbearia(barbearia.id);
-    }
-
     try {
-      navigation.navigate("AgendarServico");
+      router.push("/Clientes/AgendarServico");
     } catch (error) {
       console.error("Erro ao navegar para agendamento:", error);
     }
@@ -318,7 +313,7 @@ export default function DetalhesBarbearia() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.botaoVoltarErro}
-          onPress={() => navigation.goBack()}
+          onPress={() => router.back()}
           activeOpacity={0.7}
         >
           <Text style={styles.botaoVoltarErroTexto}>Voltar</Text>
@@ -337,7 +332,7 @@ export default function DetalhesBarbearia() {
       {/* BOTÃO VOLTAR FLUTUANTE */}
       <TouchableOpacity
         style={styles.botaoVoltar}
-        onPress={() => navigation.goBack()}
+        onPress={() => router.back()}
         activeOpacity={0.8}
       >
         <Feather name="arrow-left" size={22} color="#0F172A" />

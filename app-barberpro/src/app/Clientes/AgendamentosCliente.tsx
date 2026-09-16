@@ -14,6 +14,7 @@ import SegmentedControl from '@react-native-segmented-control/segmented-control'
 import { AgendamentoCard, AgendamentoData } from "@/_components/AgendamentoCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { agendamentosService } from "@/services/agendamentosService"; // Ajuste o caminho se necessário
+import { useFocusEffect } from "expo-router";
 
 
 export default function AgendamentosCliente() {
@@ -42,9 +43,11 @@ export default function AgendamentosCliente() {
     }
   }, [user?.clienteId]);
 
-  useEffect(() => {
-    carregarAgendamentos();
-  }, [carregarAgendamentos]);
+  useFocusEffect(
+  useCallback(() => {
+    void carregarAgendamentos();
+  }, [carregarAgendamentos]),
+  );
 
   // Função para cancelar agendamento
   const handleCancelar = (id: number) => {
@@ -68,10 +71,15 @@ export default function AgendamentosCliente() {
 
   // Filtro inteligente baseado no SegmentedControl
   const agendamentosFiltrados = agendamentos.filter((item) => {
+    const status = String(item.status ?? "").toUpperCase();
+
     if (selectedIndex === 0) {
-      return item.status === 'AGENDADO'; // Aba 'Próximos'
+      return ["PENDENTE", "CONFIRMADO", "EM_ANDAMENTO", "AGENDADO"].includes(
+        status,
+      );
     }
-    return item.status === 'CONCLUIDO' || item.status === 'CANCELADO'; // Aba 'Histórico'
+
+    return ["CONCLUIDO", "CANCELADO"].includes(status);
   });
 
   if (!fontsLoaded) {

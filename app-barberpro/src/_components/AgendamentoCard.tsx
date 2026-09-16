@@ -8,7 +8,13 @@ export interface AgendamentoData {
   data: string;
   hora_inicio: string;
   hora_fim: string;
-  status: 'AGENDADO' | 'CONCLUIDO' | 'CANCELADO';
+  status:
+    | "PENDENTE"
+    | "CONFIRMADO"
+    | "EM_ANDAMENTO"
+    | "AGENDADO"
+    | "CONCLUIDO"
+    | "CANCELADO";
   servicos: {
     nome: string;
     preco: number | string;
@@ -37,28 +43,34 @@ export function AgendamentoCard({ agendamento, onCancelar }: AgendamentoCardProp
   const servicoNome = agendamento.servicos?.nome || 'Serviço';
   const preco = Number(agendamento.servicos?.preco || 0).toFixed(2).replace('.', ',');
 
-  // Formatação de Data (Ex: "27 de fev.")
-  const dateObj = new Date(agendamento.data);
-  const dataFormatada = dateObj.toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  });
+  // Formatação de Horário (Ex: "14:00") e Formatação de Data (Ex: "27 de fev.")
+  const dataIso = String(agendamento.data).slice(0, 10);
+  const [ano, mes, dia] = dataIso.split("-").map(Number);
+  const dataFormatada = new Date(ano, mes - 1, dia, 12).toLocaleDateString(
+    "pt-BR",
+    { day: "2-digit", month: "short" },
+  );
 
-  // Formatação de Horário (Ex: "14:00")
-  const horaObj = new Date(agendamento.hora_inicio);
-  const horaFormatada = horaObj.toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const valorHora = String(agendamento.hora_inicio ?? "");
+  const horaEncontrada =
+    valorHora.match(/T(\d{2}):(\d{2})/) ??
+    valorHora.match(/^(\d{2}):(\d{2})/);
+  const horaFormatada = horaEncontrada
+    ? `${horaEncontrada[1]}:${horaEncontrada[2]}`
+    : "--:--";
 
-  // Mapeamento visual de status
-  const isAgendado = agendamento.status === 'AGENDADO';
-  const isCancelado = agendamento.status === 'CANCELADO';
+  const status = String(agendamento.status ?? "PENDENTE").toUpperCase();
+  const isCancelado = status === "CANCELADO";
+  const isConcluido = status === "CONCLUIDO";
+  const isCancelavel = ["PENDENTE", "CONFIRMADO", "AGENDADO"].includes(status);
 
-  const statusTextMap = {
-    AGENDADO: 'Agendado',
-    CONCLUIDO: 'Concluído',
-    CANCELADO: 'Cancelado',
+  const statusTextMap: Record<string, string> = {
+    PENDENTE: "Pendente",
+    CONFIRMADO: "Confirmado",
+    EM_ANDAMENTO: "Em andamento",
+    AGENDADO: "Agendado",
+    CONCLUIDO: "Concluído",
+    CANCELADO: "Cancelado",
   };
 
   return (
@@ -81,7 +93,7 @@ export function AgendamentoCard({ agendamento, onCancelar }: AgendamentoCardProp
               agendamento.status === 'CONCLUIDO' && { color: '#0284C7' },
             ]}
           >
-            {statusTextMap[agendamento.status] || agendamento.status}
+            {statusTextMap[status] ?? status}
           </Text>
         </View>
       </View>
@@ -139,14 +151,14 @@ export function AgendamentoCard({ agendamento, onCancelar }: AgendamentoCardProp
 
       <View style={styles.actionsRow}>
         {/* Botão Cancelar aparece apenas se estiver AGENDADO */}
-        {isAgendado && onCancelar && (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => onCancelar(agendamento.id)}
-          >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-        )}
+      {isCancelavel && onCancelar && (
+        <TouchableOpacity
+          style={styles.cancelButton}
+          onPress={() => onCancelar(agendamento.id)}
+        >
+          <Text style={styles.cancelButtonText}>Cancelar</Text>
+        </TouchableOpacity>
+      )}
 
         <View style={{ flex: 1 }}>
           <Button label="Ver Detalhes" isActive={true} style={styles.button} />

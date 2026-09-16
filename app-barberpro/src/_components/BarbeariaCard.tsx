@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity,TouchableOpacityProps, Image } from 'react-native'
 import { BarbeariaCardDTO } from '../services/barbeariaService'
-import React from 'react'
 
 interface BarbeariaCardProps extends TouchableOpacityProps{
     barbearia: BarbeariaCardDTO;

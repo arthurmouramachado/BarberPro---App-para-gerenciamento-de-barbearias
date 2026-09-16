@@ -2,11 +2,15 @@ import { ProfileMenuItem } from "@/_components/ProfileMenuItem";
 import { UserCard } from "@/_components/UserCard";
 import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
+import { useAuth } from "@/contexts/AuthContext";
 import { Inter_700Bold, useFonts } from "@expo-google-fonts/inter";
+import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useState } from "react";
 import {
     StyleSheet,
+    Text,
+    TouchableOpacity,
     View,
 
 } from "react-native";
@@ -15,6 +19,8 @@ export default function PerfilCliente() {
   const [fontsLoaded] = useFonts({
     Inter_700Bold,
   });
+
+  const { user, signOut } = useAuth();
 
 
   if (!fontsLoaded) {
@@ -43,6 +49,21 @@ export default function PerfilCliente() {
       <ProfileMenuItem title="Notificações" iconName={"bell"}/>
       <ProfileMenuItem title="Configurações" iconName={"settings"}/>
 
+      {/* Botão de Sair */}
+            <TouchableOpacity
+              style={[styles.menuItem, styles.logoutItem]}
+              activeOpacity={0.7}
+              onPress={signOut}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={styles.logoutIconBadge}>
+                  <Feather name="log-out" size={20} color="#EF4444" />
+                </View>
+                <Text style={styles.logoutText}>Sair da Conta</Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#EF4444" />
+            </TouchableOpacity>
+
     </View>
   );
 }
@@ -62,5 +83,52 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 20,
     fontFamily: "Inter_700Bold",
+  },
+   menuItem: {
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  menuItemLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  iconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EFF6FF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuItemText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#0F172A",
+  },
+  logoutItem: {
+    backgroundColor: "#FEF2F2",
+    borderColor: "#FEE2E2",
+    marginTop: 8,
+    marginHorizontal: 20,
+  },
+  logoutIconBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FEE2E2",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoutText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 15,
+    color: "#EF4444",
   },
 });

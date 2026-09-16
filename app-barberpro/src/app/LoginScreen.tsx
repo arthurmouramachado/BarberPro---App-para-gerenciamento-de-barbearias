@@ -67,9 +67,9 @@ export default function LoginScreen() {
       const perfil = loginFeito?.funcao;
 
       if (perfil === "CLIENTE") {
-        router.replace("/Clientes/HomeClienteScreen" as any);
+        router.replace("/Clientes/(tabs)/HomeClienteScreen" as any);
       } else if (perfil === "BARBEIRO" || perfil === "ADMIN") {
-        router.replace("/Barbeiro/HomeBarbeiroScreen" as any);
+        router.replace("/Barbeiro/(tabs)/HomeBarbeiroScreen" as any);
       }
     } catch (error: any) {
       console.error(

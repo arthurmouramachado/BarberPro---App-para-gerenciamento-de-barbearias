@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useRef } from "react";
 import {
   FlatList,
   StyleSheet,
@@ -54,6 +54,28 @@ export default function AgendaBarbeiro() {
   const [agendamentos, setAgendamentos] = useState<AgendamentoDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [erroAgenda, setErroAgenda] = useState<string | null>(null);
+  const requisicaoAtual = useRef(0);
+  const barbeiroId = user?.barbeiroId;
+
+  // Nunca usa o ID da conta de usuário como se fosse o ID do barbeiro.
+  // Filtra também na renderização para não exibir dados do dia anterior.
+  const agendamentosDoDia = useMemo(
+    () => agendamentos.filter((item) =>
+      item.barbeiro_id === barbeiroId &&
+      String(item.data).slice(0, 10) === dataSelecionada
+    ),
+    [agendamentos, barbeiroId, dataSelecionada],
+  );
+
+  const selecionarDia = (iso: string) => {
+    if (iso === dataSelecionada) return;
+    requisicaoAtual.current += 1;
+    setAgendamentos([]);
+    setErroAgenda(null);
+    setLoading(true);
+    setDataSelecionada(iso);
+  };
 
   // Gera os dias para o carrossel (3 dias passados e 14 dias futuros)
   const listaDias = useMemo<DiaCarrossel[]>(() => {
@@ -83,38 +105,57 @@ export default function AgendaBarbeiro() {
   }, [hojeIso]);
 
   // Busca agendamentos na API para a data selecionada
-  const carregarAgendamentos = async () => {
-    const barbeiroId = user?.barbeiroId || user?.id;
+  const carregarAgendamentos = useCallback(async () => {
+    const numeroRequisicao = ++requisicaoAtual.current;
+    setAgendamentos([]);
+    setErroAgenda(null);
 
     if (!barbeiroId) {
+      setErroAgenda("Perfil de barbeiro não encontrado. Saia e entre novamente na conta.");
       setLoading(false);
+      setRefreshing(false);
       return;
     }
 
     try {
       setLoading(true);
-      const data = await agendamentosService.buscarPorBarbeiro(
+      const resposta = await agendamentosService.buscarPorBarbeiro(
         barbeiroId,
         dataSelecionada
       );
-      setAgendamentos(data);
+
+      // Só a consulta mais recente pode atualizar esta tela.
+      if (numeroRequisicao !== requisicaoAtual.current) return;
+      if (!Array.isArray(resposta)) {
+        throw new Error("A API não retornou uma lista de agendamentos.");
+      }
+      setAgendamentos(resposta);
     } catch (error) {
+      if (numeroRequisicao !== requisicaoAtual.current) return;
+      setAgendamentos([]);
+      setErroAgenda("Não foi possível carregar este dia. Puxe a lista para tentar novamente.");
       console.error("Erro ao carregar agenda:", error);
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (numeroRequisicao === requisicaoAtual.current) {
+        setLoading(false);
+        setRefreshing(false);
+      }
     }
-  };
+  }, [barbeiroId, dataSelecionada]);
 
   useFocusEffect(
     useCallback(() => {
-      carregarAgendamentos();
-    }, [dataSelecionada])
+      void carregarAgendamentos();
+      return () => {
+        // Ignora respostas depois de sair da tela ou trocar a data/conta.
+        requisicaoAtual.current += 1;
+      };
+    }, [carregarAgendamentos])
   );
 
   const onRefresh = () => {
     setRefreshing(true);
-    carregarAgendamentos();
+    void carregarAgendamentos();
   };
 
   type AgendamentoStatus = AgendamentoDTO["status"];
@@ -152,9 +193,10 @@ export default function AgendaBarbeiro() {
   };
 
   const formatarHora = (dataIso: string) => {
-    if (!dataIso) return "--:--";
-    const d = new Date(dataIso);
-    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    // hora_inicio é um horário de atendimento (@db.Time), sem conversão de fuso.
+    const valor = String(dataIso ?? "");
+    const hora = valor.match(/T(\d{2}:\d{2})/) ?? valor.match(/^(\d{2}:\d{2})/);
+    return hora ? hora[1] : "--:--";
   };
 
   if (!fontsLoaded) {
@@ -192,7 +234,10 @@ export default function AgendaBarbeiro() {
                     styles.dayCard,
                     estaSelecionado && styles.dayCardSelected,
                   ]}
-                  onPress={() => setDataSelecionada(item.iso)}
+                  onPress={() => selecionarDia(item.iso)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver agendamentos de ${item.iso}`}
+                  accessibilityState={{ selected: estaSelecionado }}
                 >
                   <Text
                     style={[
@@ -234,9 +279,9 @@ export default function AgendaBarbeiro() {
         </View>
       ) : (
         <FlatList
-          data={agendamentos}
+          data={agendamentosDoDia}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[styles.listContainer, { flexGrow: 1 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -249,7 +294,7 @@ export default function AgendaBarbeiro() {
             <View style={styles.emptyContainer}>
               <Feather name="calendar" size={40} color="#94A3B8" />
               <Text style={styles.emptyText}>
-                Nenhum agendamento encontrado para este dia.
+                {erroAgenda ?? "Nenhum agendamento encontrado para este dia."}
               </Text>
             </View>
           }

@@ -21,7 +21,8 @@ import { UserCard } from "@/_components/UserCard";
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { avaliacoesService } from "@/services/avaliacoes";
-import { useNavigation } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+
 
 export default function PerfilBarbeiro() {
   const [fontsLoaded] = useFonts({
@@ -31,7 +32,7 @@ export default function PerfilBarbeiro() {
   });
 
   const { user, signOut } = useAuth();
-  const navigation = useNavigation<any>();
+  const router = useRouter();
 
   const [rating, setRating] = useState<string>("0.0");
   const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
@@ -113,7 +114,7 @@ export default function PerfilBarbeiro() {
               style={styles.menuItem}
               activeOpacity={0.7}
               onPress={() =>
-                navigation.navigate("RelatoriosFinanceiros")
+                router.push("/Barbeiro/RelatoriosFinanceiros" as any)
               }
             >
               <View style={styles.menuItemLeft}>
@@ -148,7 +149,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("HorariosTrabalho")}
+              onPress={() => router.push("/Barbeiro/HorariosTrabalho" as any)}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
