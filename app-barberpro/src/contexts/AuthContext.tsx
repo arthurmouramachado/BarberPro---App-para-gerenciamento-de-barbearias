@@ -1,7 +1,9 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService } from '../services/authService'; 
 import { jwtDecode } from 'jwt-decode';
+import { router } from 'expo-router';
+import { Alert } from 'react-native';
 
 // Estrutura do Usuário Logado
 interface User {
@@ -37,24 +39,50 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const versaoSessao = useRef(0);
+  const filaStorage = useRef<Promise<void>>(Promise.resolve());
+
+  // A limpeza da conta anterior termina antes de salvar uma nova sessão.
+  function executarStorage(acao: () => Promise<void>): Promise<void> {
+    const operacao = filaStorage.current.then(acao);
+    filaStorage.current = operacao.catch(() => {});
+    return operacao;
+  }
 
   useEffect(() => {
+    let ativo = true;
+    const versaoInicial = versaoSessao.current;
     async function loadStorageData() {
-      const storagedUser = await AsyncStorage.getItem('@BarberPro:user');
-      const storagedToken = await AsyncStorage.getItem('@BarberPro:token');
-
-      if (storagedUser && storagedToken) {
-        setUser(JSON.parse(storagedUser));
+      try {
+        const [storagedUser, storagedToken] = await Promise.all([
+          AsyncStorage.getItem('@BarberPro:user'),
+          AsyncStorage.getItem('@BarberPro:token'),
+        ]);
+        if (!ativo || versaoInicial !== versaoSessao.current) return;
+        if (storagedUser && storagedToken) {
+          const payload = jwtDecode<TokenPayload>(storagedToken);
+          if (!payload.exp || payload.exp * 1000 <= Date.now()) {
+            throw new Error('Sessão expirada');
+          }
+          const salvo = JSON.parse(storagedUser) as User;
+          setUser({ ...salvo, funcao: String(salvo.funcao).trim().toUpperCase() });
+        }
+      } catch (error) {
+        if (!ativo || versaoInicial !== versaoSessao.current) return;
+        setUser(null);
+        console.warn('Não foi possível restaurar a sessão:', error);
+      } finally {
+        if (ativo && versaoInicial === versaoSessao.current) setLoading(false);
       }
-      setLoading(false);
     }
 
     loadStorageData();
+    return () => { ativo = false; };
   }, []);
 
 
   async function signIn(email: string, pass: string) {
-
+    const numeroSessao = ++versaoSessao.current;
     const data = await authService.login(email, pass);
     const token = data.access_token;
 
@@ -64,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       id: decodedPayload.sub || decodedPayload.id,
       nome: decodedPayload.nome || decodedPayload.name || "",
       email: email,
-      funcao: decodedPayload.funcao || decodedPayload.role,
+      funcao: String(decodedPayload.funcao || decodedPayload.role || '').trim().toUpperCase(),
 
       clienteId:
         decodedPayload.clienteId ??
@@ -82,19 +110,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         decodedPayload.barbearia?.id,
     };
 
+    if (numeroSessao !== versaoSessao.current) throw new Error('Login interrompido.');
+    await executarStorage(async () => {
+      if (numeroSessao !== versaoSessao.current) throw new Error('Login interrompido.');
+      await AsyncStorage.multiSet([
+        ['@BarberPro:token', token],
+        ['@BarberPro:user', JSON.stringify(loggedUser)],
+      ]);
+    });
+    if (numeroSessao !== versaoSessao.current) throw new Error('Login interrompido.');
     setUser(loggedUser);
-
-    await AsyncStorage.setItem('@BarberPro:token', token);
-    await AsyncStorage.setItem('@BarberPro:user', JSON.stringify(loggedUser));
+    setLoading(false);
 
     return loggedUser;
   }
 
 
   async function signOut() {
-    await AsyncStorage.removeItem('@BarberPro:token');
-    await AsyncStorage.removeItem('@BarberPro:user');
+    // Encerra a sessão em memória e abre o login imediatamente.
+    versaoSessao.current += 1;
     setUser(null);
+    setLoading(false);
+    const limpeza = executarStorage(() =>
+      AsyncStorage.multiRemove(['@BarberPro:token', '@BarberPro:user']),
+    );
+    router.replace('/LoginScreen');
+    try {
+      await limpeza;
+    } catch (error) {
+      console.error('Erro ao limpar a sessão salva:', error);
+      Alert.alert('Sessão encerrada', 'Não foi possível limpar os dados salvos no aparelho. Se a conta voltar ao reabrir o aplicativo, saia novamente.');
+    }
   }
 
   return (

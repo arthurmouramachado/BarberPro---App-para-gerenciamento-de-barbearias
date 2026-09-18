@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,6 +21,7 @@ import { barbeiroService, BarbeiroDTO } from "@/services/barbeiroService";
 import { servicosService, ServicoDTO } from "@/services/servicosService";
 import { agendamentosService } from "@/services/agendamentosService";
 import { clienteService } from "@/services/clienteService";
+import { ehPlanoPelaDescricao } from "@/utils/planoNoFront";
 
 import { ptBR } from "@/utils/localeCalendarConfig";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -49,7 +50,7 @@ export default function AgendarServico() {
     dataSelecionada: dataSelecionadaContexto,
   } = useAgendamento();
 
-  const exigePagamentoPix = planoIdContexto != null;
+  const idSelecionado = planoIdContexto ?? servicoIdContexto;
 
   const hojeString = new Date().toISOString().split("T")[0];
 
@@ -62,6 +63,15 @@ export default function AgendarServico() {
   );
 
   const [servicoApi, setServicoApi] = useState<ServicoDTO | null>(null);
+
+  const servicoPronto = Boolean(
+    servicoApi && servicoApi.id === idSelecionado && servicoApi.ativo !== false,
+  );
+  const exigePagamentoPix = planoIdContexto !== null || (
+    servicoPronto &&
+     ehPlanoPelaDescricao(servicoApi?.descricao)
+  );
+
   const [clienteIdReal, setClienteIdReal] = useState<number | null>(user?.clienteId || null);
 
   const [dataSelecionada, setDataSelecionada] = useState<string>(
@@ -77,13 +87,16 @@ export default function AgendarServico() {
   const [isLoadingHorarios, setIsLoadingHorarios] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const envioEmAndamento = useRef(false)
+
   // Modal Pix e Agendamento Criado
   const [modalVisible, setModalVisible] = useState(false);
   const [agendamentoCriado, setAgendamentoCriado] = useState<{
-    id: number;
-    valor: number;
-    nomeServico: string;
-  } | null>(null);
+      id: number;
+      valor: number;
+      nomeServico: string;
+      chaveSelecao: string;
+    } | null>(null);
 
   // ====================================================
   // 1. RESOLVER CLIENTE ID (SE NÃO ESTIVER NO TOKEN)
@@ -150,10 +163,12 @@ export default function AgendarServico() {
   // 3. CARREGAR DETALHES DO SERVIÇO DA API
   // ====================================================
   useEffect(() => {
+    let ativo = true;
     async function carregarServico() {
-      const idSelecionado = servicoIdContexto ?? planoIdContexto;
+      setServicoApi(null);
 
       if (!idSelecionado) {
+        setIsLoadingServico(false);
         Alert.alert(
           "Erro",
           "Nenhum serviço ou plano foi selecionado.",
@@ -164,18 +179,23 @@ export default function AgendarServico() {
       setIsLoadingServico(true);
       try {
         const dados = await servicosService.buscarPorId(Number(idSelecionado));
-        if (dados) {
-          setServicoApi(dados);
+        if (!ativo) return;
+        if (!dados || dados.id !== idSelecionado || dados.ativo === false) {
+          throw new Error("O serviço selecionado não está disponível.");
         }
+        setServicoApi(dados);
       } catch (error: any) {
+        if (!ativo) return;
         console.error("Erro ao carregar detalhes do serviço:", error?.message);
+        Alert.alert("Erro", "Não foi possível carregar o serviço. Volte e selecione o item novamente.");
       } finally {
-        setIsLoadingServico(false);
+        if (ativo) setIsLoadingServico(false);
       }
     }
 
     carregarServico();
-  }, [servicoIdContexto, planoIdContexto]);
+    return () => { ativo = false; };
+  }, [idSelecionado]);
 
   // ====================================================
   // 4. CARREGAR HORÁRIOS DISPONÍVEIS DA API
@@ -186,7 +206,6 @@ export default function AgendarServico() {
 
       setIsLoadingHorarios(true);
       try {
-        const idSelecionado = servicoIdContexto ?? planoIdContexto;
 
         if (!idSelecionado) {
           Alert.alert(
@@ -219,7 +238,7 @@ export default function AgendarServico() {
     }
 
     carregarHorarios();
-  }, [barbeiroSelecionado, dataSelecionada, servicoIdContexto, planoIdContexto]);
+  }, [barbeiroSelecionado, dataSelecionada, idSelecionado]);
 
   // ====================================================
   // SELEÇÃO DE BARBEIRO E DATA
@@ -238,6 +257,13 @@ export default function AgendarServico() {
   // CONFIRMAR AGENDAMENTO NA API (SEM FALLBACK FALSO)
   // ====================================================
   const handleConfirmarAgendamento = async () => {
+    if (envioEmAndamento.current) return;
+
+    if (isLoadingServico || !servicoPronto || !servicoApi) {
+      Alert.alert("Atenção", "Não foi possível carregar os dados deste serviço. Volte e selecione o item novamente.");
+      return;
+    }
+
     if (!barbeiroSelecionado || !dataSelecionada || !horarioSelecionado) {
       Alert.alert(
         "Atenção",
@@ -251,6 +277,15 @@ export default function AgendarServico() {
       return;
     }
 
+    const chaveSelecao = [idSelecionado, barbeiroSelecionado, dataSelecionada, horarioSelecionado].join(":");
+
+    // Fechar e reabrir o Pix reutiliza o mesmo agendamento pendente.
+    if (exigePagamentoPix && agendamentoCriado?.chaveSelecao === chaveSelecao) {
+      setModalVisible(true);
+      return;
+    }
+
+    envioEmAndamento.current = true;
     setIsSubmitting(true);
 
     try {
@@ -264,7 +299,7 @@ export default function AgendarServico() {
       const fimM = String(totalMinutos % 60).padStart(2, "0");
       const horaFimFormatada = `${fimH}:${fimM}:00`;
 
-      const idServico = Number(servicoApi?.id || servicoIdContexto || planoIdContexto);
+      const idServico = servicoApi.id;
       const precoFinal = Number(servicoApi?.preco || 0);
 
       // 2. Criar Agendamento Real na API
@@ -287,7 +322,7 @@ export default function AgendarServico() {
         throw new Error("A API não retornou o identificador do agendamento criado.");
       }
 
-      // 3. Abre o ModalPix com o agendamento real
+      // 3. Avulso confirma no local; plano continua para pagamento via Pix.
       if (!exigePagamentoPix) {
         Alert.alert(
           "Agendamento confirmado!",
@@ -307,6 +342,7 @@ export default function AgendarServico() {
         id: idRetornado,
         valor: precoFinal,
         nomeServico: servicoApi?.nome || "Serviço de Barbearia",
+        chaveSelecao,
       });
 
       setModalVisible(true);
@@ -319,6 +355,7 @@ export default function AgendarServico() {
         "Não foi possível registrar o agendamento. Verifique se o cliente e o serviço estão cadastrados.";
       Alert.alert("Erro no Agendamento", Array.isArray(mensagem) ? mensagem.join("\n") : mensagem);
     } finally {
+      envioEmAndamento.current = false;
       setIsSubmitting(false);
     }
   };
@@ -569,8 +606,8 @@ export default function AgendarServico() {
         ================================================== */}
         <View style={[styles.footerContainer, {height: 64 + insets.bottom}]}>
           <Button
-            label={isSubmitting ? "Processando..." : "Confirmar Agendamento"}
-            isActive={!!horarioSelecionado && !isSubmitting}
+            label={isSubmitting ? "Processando..." : exigePagamentoPix ? "Continuar para o Pix" : "Confirmar Agendamento"}
+            isActive={!!horarioSelecionado && servicoPronto && !isLoadingServico && !isLoadingHorarios && !isSubmitting}
             onPress={handleConfirmarAgendamento}
           />
         </View>
@@ -605,9 +642,7 @@ export default function AgendarServico() {
   );
 }
 
-// ======================================================
-// ESTILOS
-// ======================================================
+
 
 const styles = StyleSheet.create({
   container: {

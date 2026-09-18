@@ -3,8 +3,7 @@ import { api } from './api';
 // 1. Contrato do Serviço
 export interface ServicoDTO {
   ativo: any;
-  tipo: string;
-  descricao: any;
+  descricao?: string | null;
   duracao: number;
   id: number;
   nome: string;

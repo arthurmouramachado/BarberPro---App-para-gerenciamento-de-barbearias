@@ -24,6 +24,7 @@ import {
 import { colors } from "@/colors";
 import { useAuth } from "@/contexts/AuthContext";
 import { servicosService } from "@/services/servicosService";
+import { descricaoParaSalvar, descricaoSemPrefixo, ehPlanoPelaDescricao } from "@/utils/planoNoFront";
 
 export interface ServicoItem {
   id: string | number;
@@ -76,15 +77,15 @@ export default function Servicos() {
       const dados = await servicosService.listarPorBarbeiro(barbeiroId);
 
       setServicos(
-        dados.map((item: any) => ({
-          id: item.id,
-          nome: item.nome,
-          preco: Number(item.preco),
-          duracao: item.duracao_minutos || item.duracao || item.duracaoMinutos || 0,
-          descricao: item.descricao,
-          tipo: (item.tipo || "SERVICO") as "SERVICO" | "PACOTE",
-          ativo: item.ativo,
-        }))
+              dados.map((item: any) => ({
+                id: item.id,
+                nome: item.nome,
+                preco: Number(item.preco),
+                duracao: item.duracao_minutos || item.duracao || item.duracaoMinutos || 0,
+                descricao: descricaoSemPrefixo(item.descricao),
+                tipo: ehPlanoPelaDescricao(item.descricao) ? "PACOTE" : "SERVICO",
+                ativo: item.ativo,
+              }))
       );
     } catch (error: any) {
       console.error("Erro ao carregar serviços:", error?.response?.status, error?.response?.data);
@@ -119,7 +120,7 @@ export default function Servicos() {
     setNome(item.nome || "");
     setPreco(item.preco ? String(item.preco) : "");
     setDuracao(item.duracao ? String(item.duracao) : "");
-    setDescricao(item.descricao || "");
+    setDescricao(descricaoSemPrefixo(item.descricao));
     setTipo(item.tipo || "SERVICO");
     setModalVisivel(true);
   }
@@ -157,41 +158,18 @@ export default function Servicos() {
         nome: nome.trim(),
         preco: valorPreco,
         duracao_minutos: valorDuracao,
-        descricao: descricao.trim(),
-        tipo,
+        descricao: descricaoParaSalvar(descricao, tipo === "PACOTE"),
       };
 
       if (itemEdicaoId) {
         await servicosService.atualizar(itemEdicaoId, payload);
-        setServicos((prev) =>
-          prev.map((item) =>
-            item.id === itemEdicaoId
-              ? {
-                  ...item,
-                  nome: nome.trim(),
-                  preco: valorPreco,
-                  duracao: valorDuracao,
-                  descricao: descricao.trim(),
-                  tipo,
-                }
-              : item
-          )
-        );
-        Alert.alert("Sucesso", "Item atualizado com sucesso!");
       } else {
-        const resposta = await servicosService.cadastrar(payload);
-        const novoItem: ServicoItem = {
-          id: resposta?.id || Date.now(),
-          nome: nome.trim(),
-          preco: valorPreco,
-          duracao: valorDuracao,
-          descricao: descricao.trim(),
-          tipo,
-          ativo: true,
-        };
-        setServicos((prev) => [novoItem, ...prev]);
-        Alert.alert("Sucesso", "Novo item cadastrado!");
+        await servicosService.cadastrar(payload);
       }
+
+      // Releia a resposta real: a classificação deve sobreviver ao recarregamento.
+      await carregarServicos();
+      Alert.alert("Sucesso", itemEdicaoId ? "Item atualizado!" : "Novo item cadastrado!");
 
       setModalVisivel(false);
     } catch (error) {

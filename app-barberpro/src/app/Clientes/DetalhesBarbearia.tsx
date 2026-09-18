@@ -1,6 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +17,8 @@ import { useAgendamento } from "@/contexts/AgendamentoContext";
 import { avaliacoesService } from "@/services/avaliacoes";
 import { barbeariaService } from "@/services/barbeariaService";
 import { servicosService } from "@/services/servicosService";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { descricaoSemPrefixo, ehPlanoPelaDescricao } from "@/utils/planoNoFront";
 
 // ======================================================
 // TIPOS
@@ -29,8 +30,7 @@ export type ServicoItem = {
   duracao_minutos?: number;
   duracao?: number;
   preco: number;
-  descricao?: string;
-  tipo?: string;
+  descricao?: string | null;
   ativo?: boolean;
 };
 
@@ -77,11 +77,15 @@ export default function DetalhesBarbearia() {
   const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
 
   const [servicoSelecionado, setServicoSelecionado] = useState<number | null>(
-    servicoIdContexto || null,
+    barbeariaId === idDaBarbearia ? servicoIdContexto : null,
   );
+
   const [planoSelecionado, setPlanoSelecionado] = useState<number | null>(
-    planoIdContexto || null,
+    barbeariaId === idDaBarbearia ? planoIdContexto : null,
   );
+
+  const selecaoAtual = useRef({ servicoSelecionado, planoSelecionado });
+    selecaoAtual.current = { servicoSelecionado, planoSelecionado };
 
   // ====================================================
   // CARREGAR DADOS DA API
@@ -102,7 +106,6 @@ export default function DetalhesBarbearia() {
 
       try {
         const idNumero = Number(idDaBarbearia);
-        selecionarBarbearia(idNumero);
 
         let dadosBarbearia: BarbeariaDetalhes | null = null;
         let servicosRetornados: ServicoItem[] = [];
@@ -205,24 +208,32 @@ export default function DetalhesBarbearia() {
         );
 
         const listaServicos = itensAtivos.filter(
-          (item) => item.tipo !== "PACOTE" && item.tipo !== "PLANO",
+          (item) => !ehPlanoPelaDescricao(item.descricao),
         );
         const listaPlanos = itensAtivos.filter(
-          (item) => item.tipo === "PACOTE" || item.tipo === "PLANO",
+          (item) => ehPlanoPelaDescricao(item.descricao),
         );
 
         setServicos(listaServicos);
         setPlanos(listaPlanos);
 
-        // 4. Se nada estiver selecionado, auto-seleciona o primeiro serviço para conveniência
-        if (!servicoSelecionado && !planoSelecionado) {
-          if (listaServicos.length > 0) {
-            setServicoSelecionado(listaServicos[0].id);
-            selecionarServico(listaServicos[0].id);
-          } else if (listaPlanos.length > 0) {
-            setPlanoSelecionado(listaPlanos[0].id);
-            selecionarPlano(listaPlanos[0].id);
-          }
+        // Mantém a seleção ao atualizar, desde que o item ainda esteja ativo.
+        const planoMantido = listaPlanos.find(
+          (item) => item.id === selecaoAtual.current.planoSelecionado,
+        );
+        const servicoMantido = listaServicos.find(
+          (item) => item.id === selecaoAtual.current.servicoSelecionado,
+        );
+
+        if (planoMantido) {
+          setPlanoSelecionado(planoMantido.id);
+          setServicoSelecionado(null);
+        } else if (servicoMantido || listaServicos[0]) {
+          setServicoSelecionado((servicoMantido ?? listaServicos[0]).id);
+          setPlanoSelecionado(null);
+        } else {
+          setPlanoSelecionado(listaPlanos[0]?.id ?? null);
+          setServicoSelecionado(null);
         }
       } catch (error) {
         console.error("Erro ao carregar barbearia:", error);
@@ -242,41 +253,35 @@ export default function DetalhesBarbearia() {
     carregarDados();
   }, [carregarDados]);
 
-  // ====================================================
-  // SELECIONAR SERVIÇO
-  // ====================================================
-
   const handleSelecionarServico = (id: number) => {
-    setServicoSelecionado(id);
-    setPlanoSelecionado(null);
-    selecionarServico(id);
-  };
-
-  // ====================================================
-  // SELECIONAR PLANO
-  // ====================================================
+      setServicoSelecionado(id);
+      setPlanoSelecionado(null);
+    };
 
   const handleSelecionarPlano = (id: number) => {
-    setPlanoSelecionado(id);
-    setServicoSelecionado(null);
-    selecionarPlano(id);
-  };
-
-  // ====================================================
-  // PROSSEGUIR
-  // ====================================================
+      setPlanoSelecionado(id);
+      setServicoSelecionado(null);
+    };
 
   const handleProsseguir = () => {
-    if (!servicoSelecionado && !planoSelecionado) {
-      Alert.alert("Atenção", "Selecione um serviço ou plano para continuar.");
-      return;
-    }
+      if (loading || refreshing) return;
 
-    try {
+      const plano = planos.find((item) => item.id === planoSelecionado);
+      const servico = servicos.find((item) => item.id === servicoSelecionado);
+      if (!idDaBarbearia || (!plano && !servico)) {
+        Alert.alert("Atenção", "Selecione um serviço ou plano para continuar.");
+        return;
+      }
+
+      // Primeiro define a barbearia; depois restaura a seleção no contexto.
+      // selecionarBarbearia limpa as escolhas anteriores por projeto.
+      selecionarBarbearia(idDaBarbearia);
+      if (plano) {
+        selecionarPlano(plano.id);
+      } else if (servico) {
+        selecionarServico(servico.id);
+      }
       router.push("/Clientes/AgendarServico");
-    } catch (error) {
-      console.error("Erro ao navegar para agendamento:", error);
-    }
   };
 
   // ====================================================
@@ -449,9 +454,9 @@ export default function DetalhesBarbearia() {
                       <Text style={styles.duracaoServico}>{duracao} min</Text>
                     ) : null}
 
-                    {servico.descricao ? (
+                    {descricaoSemPrefixo(servico.descricao)? (
                       <Text style={styles.descricaoServico}>
-                        {servico.descricao}
+                        {descricaoSemPrefixo(servico.descricao)}
                       </Text>
                     ) : null}
                   </View>
@@ -511,9 +516,9 @@ export default function DetalhesBarbearia() {
                         {plano.nome}
                       </Text>
 
-                      {plano.descricao ? (
+                      {descricaoSemPrefixo(plano.descricao) ? (
                         <Text style={styles.duracaoServico}>
-                          {plano.descricao}
+                          {descricaoSemPrefixo(plano.descricao)}
                         </Text>
                       ) : null}
                     </View>
@@ -541,7 +546,7 @@ export default function DetalhesBarbearia() {
           <View style={styles.containerBotao}>
             <Button
               label="Prosseguir"
-              isActive={!!servicoSelecionado || !!planoSelecionado}
+              isActive={!refreshing && (!!servicoSelecionado || !!planoSelecionado)}
               onPress={handleProsseguir}
             />
           </View>

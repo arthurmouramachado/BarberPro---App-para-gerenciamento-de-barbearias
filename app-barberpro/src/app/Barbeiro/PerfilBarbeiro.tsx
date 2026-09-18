@@ -34,6 +34,8 @@ export default function PerfilBarbeiro() {
   const { user, signOut } = useAuth();
   const router = useRouter();
 
+  const ehAdministrador = String(user?.funcao ?? "").trim().toUpperCase() === "ADMIN";
+
   const [rating, setRating] = useState<string>("0.0");
   const [totalAvaliacoes, setTotalAvaliacoes] = useState<number>(0);
   const [carregandoRating, setCarregandoRating] = useState<boolean>(true);
@@ -134,7 +136,7 @@ export default function PerfilBarbeiro() {
             <TouchableOpacity
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => navigation.navigate("Servicos")}
+              onPress={() => router.push("/Barbeiro/Servicos" as any)}
             >
               <View style={styles.menuItemLeft}>
                 <View style={styles.iconBadge}>
@@ -162,6 +164,25 @@ export default function PerfilBarbeiro() {
               <Feather name="chevron-right" size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
+
+          {ehAdministrador && (
+            <>
+              <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Administração</Text>
+              <TouchableOpacity
+                style={styles.menuItem}
+                activeOpacity={0.7}
+                onPress={() => router.push("/Barbeiro/ExcluirBarbeiroAdmin")}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View style={styles.iconBadge}>
+                    <Feather name="users" size={20} color={colors.primary} />
+                  </View>
+                  <Text style={styles.menuItemText}>Gerenciar Barbeiros</Text>
+                </View>
+                <Feather name="chevron-right" size={20} color="#94A3B8" />
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Seção: Conta e Ajustes */}
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Conta</Text>

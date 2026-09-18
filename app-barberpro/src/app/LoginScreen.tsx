@@ -17,12 +17,12 @@ export default function LoginScreen() {
     emailCadastrado?: string;
   }>();
 
-  // 1. Criando os estados para monitorar o que é digitado
+  // Criando os estados para monitorar o que é digitado
   const [email, setEmail] = useState(emailCadastrado || "");
   const [senha, setSenha] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // 2. Regra de validação: Só é válido se email E senha não estiverem vazios
+  // Regra de validação: Só é válido se email E senha não estiverem vazios
   const isFormValid = email.trim() !== "" && senha.trim() !== "";
 
   useEffect(() => {

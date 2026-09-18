@@ -43,6 +43,7 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const geracaoAtual = useRef(0);
 
   // ==================================================
   // LIMPEZA DO POLLING
@@ -58,44 +59,53 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   // POLLING: VERIFICAR STATUS DO PAGAMENTO NA API
   // ==================================================
   useEffect(() => {
-    if (pixGerado && pagamentoId && !confirmado) {
-      // Inicia verificação a cada 3.5 segundos
-      pollingRef.current = setInterval(() => {
-        (async () => {
-          try {
-            const res = await pagamentoService.verificarStatus(pagamentoId);
-            const status = String(
-              res?.status ??
-                res?.localStatus ??
-                res?.abacateStatus ??
-                res?.data?.status ??
-                "",
-            ).toUpperCase();
+    if (!visible || !pixGerado || !pagamentoId || confirmado) return;
 
-            if (
-              status === "CONFIRMADO" ||
-              status === "PAID" ||
-              status === "CONCLUIDO" ||
-              status === "PAGO" ||
-              status === "COMPLETED"
-            ) {
-              pararPolling();
-              setConfirmado(true);
-            }
-          } catch (error) {
-            console.warn("Erro ao checar status do pagamento:", error);
-          }
-        })();
-      }, 3500);
-    }
+    let ativo = true;
+    let consultando = false;
+    const verificar = async () => {
+      if (consultando) return;
+      consultando = true;
+      try {
+        const res = await pagamentoService.verificarStatus(pagamentoId);
+        if (!ativo) return;
+        const pago = [res?.status, res?.localStatus, res?.abacateStatus, res?.data?.status]
+          .some((status) => ["CONFIRMADO", "PAID", "PAGO", "COMPLETED"]
+            .includes(String(status ?? "").trim().toUpperCase()));
+        if (pago) {
+          pararPolling();
+          setConfirmado(true);
+        }
+      } catch (error) {
+        if (ativo) console.warn("Erro ao checar status do pagamento:", error);
+      } finally {
+        consultando = false;
+      }
+    };
 
-    return () => pararPolling();
-  }, [pixGerado, pagamentoId, confirmado]);
+    pollingRef.current = setInterval(() => { void verificar(); }, 3500);
+    void verificar();
+    return () => {
+      ativo = false;
+      pararPolling();
+    };
+  }, [visible, pixGerado, pagamentoId, confirmado]);
+
+  useEffect(() => {
+    geracaoAtual.current += 1;
+    resetarEstados();
+    setLoading(false);
+    return () => {
+      geracaoAtual.current += 1;
+      pararPolling();
+    };
+  }, [agendamentoId]);
 
   // ==================================================
   // 1. GERAR PIX VIA API
   // ==================================================
   const handleGerarPix = async () => {
+    if (loading || pixGerado) return;
     const cpfLimpo = cpf.replace(/\D/g, "");
 
     if (cpfLimpo.length !== 11) {
@@ -106,6 +116,7 @@ export const ModalPix: React.FC<ModalPixProps> = ({
       return;
     }
 
+    const numeroGeracao = ++geracaoAtual.current;
     setLoading(true);
 
     try {
@@ -115,6 +126,7 @@ export const ModalPix: React.FC<ModalPixProps> = ({
         metodo: "PIX",
         cpf: cpfLimpo,
       });
+      if (numeroGeracao !== geracaoAtual.current) return;
 
       // Suporta múltiplos formatos de resposta da sua API/AbacatePay
       const idRetornado =
@@ -141,25 +153,31 @@ export const ModalPix: React.FC<ModalPixProps> = ({
         response?.data?.qrCodeUrl ||
         null;
 
-      const formattedQrCode = rawQrCode
+      if (!Number.isInteger(Number(idRetornado)) || Number(idRetornado) <= 0 || typeof pixString !== "string" || !pixString.trim()) {
+        throw new Error("A API não retornou um pagamento válido com o código Pix.");
+      }
+
+      const formattedQrCode = typeof rawQrCode === "string" && rawQrCode
         ? rawQrCode.startsWith("http") || rawQrCode.startsWith("data:")
           ? rawQrCode
           : `data:image/png;base64,${rawQrCode}`
         : null;
 
-      setPagamentoId(idRetornado);
+      setPagamentoId(Number(idRetornado));
       setCodigoPix(pixString);
       setQrCodeUrl(formattedQrCode);
       setPixGerado(true);
     } catch (error: any) {
+      if (numeroGeracao !== geracaoAtual.current) return;
       console.error("Erro ao gerar PIX:", error?.response?.data || error?.message);
       const msg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
+        error?.message ||
         "Não foi possível gerar a cobrança PIX. Verifique sua conexão e tente novamente.";
       Alert.alert("Erro ao gerar PIX", Array.isArray(msg) ? msg.join("\n") : msg);
     } finally {
-      setLoading(false);
+      if (numeroGeracao === geracaoAtual.current) setLoading(false);
     }
   };
 
@@ -184,11 +202,15 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   // 3. SIMULAR PAGAMENTO (MODO DEV)
   // ==================================================
   const handleSimularPagamento = async () => {
+    if (!__DEV__ || !pagamentoId || loading) return;
+    const numeroGeracao = geracaoAtual.current;
     setLoading(true);
 
     try {
-      if (pagamentoId) {
-        await pagamentoService.simularPagamento(pagamentoId);
+      const resposta = await pagamentoService.simularPagamento(pagamentoId);
+      if (numeroGeracao !== geracaoAtual.current) return;
+      if (resposta?.success !== true) {
+        throw new Error("A API não confirmou a simulação do pagamento.");
       }
       pararPolling();
       setConfirmado(true);
@@ -198,15 +220,13 @@ export const ModalPix: React.FC<ModalPixProps> = ({
         "Pagamento simulado com sucesso via API."
       );
     } catch (error: any) {
-      // Fallback local se a rota de simulação não estiver disponível no back
-      pararPolling();
-      setConfirmado(true);
+      if (numeroGeracao !== geracaoAtual.current) return;
       Alert.alert(
-        "Simulação Local",
-        "Pagamento aprovado em modo de testes local."
+        "Erro na simulação",
+        error?.response?.data?.message || "A simulação falhou. O pagamento continua aguardando confirmação."
       );
     } finally {
-      setLoading(false);
+      if (numeroGeracao === geracaoAtual.current) setLoading(false);
     }
   };
 
@@ -214,8 +234,8 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   // 4. FINALIZAR
   // ==================================================
   const handleFinalizar = () => {
+    if (!confirmado) return;
     pararPolling();
-    resetarEstados();
     onSuccess();
   };
 
@@ -224,7 +244,7 @@ export const ModalPix: React.FC<ModalPixProps> = ({
   // ==================================================
   const handleFechar = () => {
     pararPolling();
-    resetarEstados();
+    // Preserva a cobrança para reabrir o mesmo Pix sem criar outro pagamento.
     onClose();
   };
 
@@ -323,21 +343,9 @@ export const ModalPix: React.FC<ModalPixProps> = ({
                       resizeMode="contain"
                     />
                   ) : (
-                    /* Fallback para o padrão visual caso a API não envie imagem direta */
-                    <View style={styles.qrPattern}>
-                      {Array.from({ length: 100 }).map((_, index) => (
-                        <View
-                          key={index}
-                          style={[
-                            styles.qrPixel,
-                            {
-                              opacity:
-                                (index * 17 + index * 3) % 7 < 3 ? 1 : 0.15,
-                            },
-                          ]}
-                        />
-                      ))}
-                    </View>
+                   <Text style={{ color: "#475569", textAlign: "center" }}>
+                      A imagem do QR Code não está disponível. Use o botão Copiar Código PIX.
+                    </Text>
                   )}
                 </View>
 
@@ -360,7 +368,7 @@ export const ModalPix: React.FC<ModalPixProps> = ({
                 </View>
 
                 {/* BOTÃO DE TESTES / DEV */}
-                <TouchableOpacity
+               {__DEV__ && <TouchableOpacity
                   style={styles.simularButton}
                   onPress={handleSimularPagamento}
                   disabled={loading}
@@ -368,9 +376,9 @@ export const ModalPix: React.FC<ModalPixProps> = ({
                   {loading ? (
                     <ActivityIndicator size="small" color="#D4B2FF" />
                   ) : (
-                    <Text style={styles.simularText}>🧪 Simular Pagamento</Text>
+                    <Text style={styles.simularText}> Simular Pagamento</Text>
                   )}
-                </TouchableOpacity>
+                </TouchableOpacity>}
               </View>
             )}
           </ScrollView>

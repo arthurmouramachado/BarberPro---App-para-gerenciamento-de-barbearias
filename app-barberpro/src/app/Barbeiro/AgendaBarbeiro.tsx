@@ -104,6 +104,13 @@ export default function AgendaBarbeiro() {
     return dias;
   }, [hojeIso]);
 
+  const indiceDia = listaDias.findIndex((dia) => dia.iso === dataSelecionada);
+  const mudarDia = (passo: number) => {
+    const dia = listaDias[indiceDia + passo];
+    if (dia) selecionarDia(dia.iso);
+  };
+  const formatarData = (valor: string) => String(valor).slice(0, 10).split("-").reverse().join("/");
+
   // Busca agendamentos na API para a data selecionada
   const carregarAgendamentos = useCallback(async () => {
     const numeroRequisicao = ++requisicaoAtual.current;
@@ -220,6 +227,7 @@ export default function AgendaBarbeiro() {
         <View style={styles.carouselContainer}>
           <FlatList
             data={listaDias}
+            extraData={dataSelecionada}
             horizontal
             showsHorizontalScrollIndicator={false}
             keyExtractor={(item) => item.iso}
@@ -271,6 +279,29 @@ export default function AgendaBarbeiro() {
           />
         </View>
       </LinearGradient>
+      
+      <View style={styles.navegadorData}>
+        <TouchableOpacity
+          onPress={() => mudarDia(-1)}
+          disabled={indiceDia <= 0}
+          accessibilityLabel="Dia anterior"
+          style={[styles.botaoData, indiceDia <= 0 && { opacity: 0.3 }]}
+        >
+          <Feather name="chevron-left" size={22} color={colors.primary} />
+        </TouchableOpacity>
+        <View style={{ alignItems: "center" }}>
+          <Text style={styles.dataDaAgenda}>Agenda de {formatarData(dataSelecionada)}</Text>
+          <Text style={styles.dicaData}>Toque em uma data ou use as setas</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => mudarDia(1)}
+          disabled={indiceDia >= listaDias.length - 1}
+          accessibilityLabel="Próximo dia"
+          style={[styles.botaoData, indiceDia >= listaDias.length - 1 && { opacity: 0.3 }]}
+        >
+          <Feather name="chevron-right" size={22} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
 
       {/* Conteúdo Principal / Lista de Agendamentos */}
       {loading ? (
@@ -279,6 +310,7 @@ export default function AgendaBarbeiro() {
         </View>
       ) : (
         <FlatList
+          key={`${barbeiroId}:${dataSelecionada}`}
           data={agendamentosDoDia}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={[styles.listContainer, { flexGrow: 1 }]}
@@ -326,6 +358,7 @@ export default function AgendaBarbeiro() {
               </View>
 
               <View style={styles.cardBody}>
+                <Text style={styles.serviceName}>Data: {formatarData(item.data)}</Text>
                 <Text style={styles.clientName}>
                   {item.clientes?.usuarios?.nome || "Cliente Não Identificado"}
                 </Text>
@@ -590,4 +623,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#FFFFFF",
   },
+  navegadorData: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  botaoData: { padding: 10 },
+  dataDaAgenda: { fontFamily: "Inter_600SemiBold", fontSize: 15, color: "#0F172A" },
+  dicaData: { fontSize: 11, color: "#64748B", marginTop: 3 },
 });

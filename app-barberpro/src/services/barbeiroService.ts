@@ -33,6 +33,11 @@ export const barbeiroService = {
         return response.data;
     },
 
+    async listarEquipeAdmin(): Promise<BarbeiroDTO[]> {
+      const response = await api.get<BarbeiroDTO[]>('/barbeiros/equipe');
+      return response.data;
+    },
+
     async buscarPorId(id: string) {
       const response = await api.get(`/barbeiros/${id}`);
       return response.data;

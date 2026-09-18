@@ -1,4 +1,8 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { BarbeiroDTO, barbeiroService } from "@/services/barbeiroService";
+import { Ionicons } from "@expo/vector-icons";
+import { Redirect, useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,16 +12,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@/contexts/AuthContext";
-import { barbeiroService, BarbeiroDTO } from "@/services/barbeiroService";
-
-// =========================================================
-// TELA
-// =========================================================
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function ExcluirBarbeiroAdmin() {
   const { user } = useAuth();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const ehAdministrador =
+    String(user?.funcao ?? "")
+      .trim()
+      .toUpperCase() === "ADMIN";
 
   const [barbeiros, setBarbeiros] = useState<BarbeiroDTO[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -28,41 +32,34 @@ export default function ExcluirBarbeiroAdmin() {
   // =========================================================
 
   const carregarBarbeiros = useCallback(async () => {
+    if (!ehAdministrador) {
+      setBarbeiros([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
-      let barbeariaId: number | null = null;
-
-      // Descobre a barbearia do barbeiro logado
-      if (user?.barbeiroId) {
-        try {
-          const barbeiroLogado = await barbeiroService.buscarPorId(
-            String(user.barbeiroId),
-          );
-          barbeariaId = barbeiroLogado?.barbearia_id ?? null;
-        } catch (err) {
-          console.warn("Erro ao buscar dados do barbeiro logado:", err);
-        }
-      }
-
-      if (barbeariaId) {
-        const lista = await barbeiroService.listarPorBarbearia(barbeariaId);
-        setBarbeiros(lista);
-      } else {
-        // Fallback: lista todos sem filtro de barbearia
-        const lista = await barbeiroService.listarPorBarbearia(0);
-        setBarbeiros(lista);
-      }
-    } catch (error) {
+      // A API identifica a barbearia pelo administrador autenticado.
+      const lista = await barbeiroService.listarEquipeAdmin();
+      setBarbeiros(lista);
+    } catch (error: any) {
+      setBarbeiros([]);
       console.error("Erro ao carregar barbeiros:", error);
-      Alert.alert("Erro", "Não foi possível carregar a lista de barbeiros.");
+      Alert.alert(
+        "Erro",
+        error?.response?.data?.message ||
+          "Não foi possível carregar a lista de barbeiros.",
+      );
     } finally {
       setLoading(false);
     }
-  }, [user?.barbeiroId]);
+  }, [ehAdministrador, user?.id]);
 
-  useEffect(() => {
-    carregarBarbeiros();
-  }, [carregarBarbeiros]);
+  useFocusEffect(
+    useCallback(() => {
+      void carregarBarbeiros();
+    }, [carregarBarbeiros]),
+  );
 
   // =========================================================
   // CONFIRMAR E EXCLUIR BARBEIRO
@@ -84,6 +81,7 @@ export default function ExcluirBarbeiroAdmin() {
   };
 
   const deletarBarbeiro = async (id: number) => {
+    if (!ehAdministrador || excluindo !== null) return;
     setExcluindo(id);
     try {
       await barbeiroService.deletar(String(id));
@@ -133,7 +131,7 @@ export default function ExcluirBarbeiroAdmin() {
             estaExcluindo && styles.deleteButtonDisabled,
           ]}
           activeOpacity={0.8}
-          disabled={estaExcluindo}
+          disabled={excluindo !== null}
           onPress={() => confirmarExclusao(item.id, nome)}
         >
           {estaExcluindo ? (
@@ -150,6 +148,10 @@ export default function ExcluirBarbeiroAdmin() {
   // ESTADO DE CARREGAMENTO
   // =========================================================
 
+  if (!user) return <Redirect href="/LoginScreen" />;
+  if (!ehAdministrador)
+    return <Redirect href="/Barbeiro/(tabs)/PerfilBarbeiro" />;
+
   if (loading) {
     return (
       <View style={styles.centroContainer}>
@@ -164,7 +166,30 @@ export default function ExcluirBarbeiroAdmin() {
   // =========================================================
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top + 12, paddingBottom: insets.bottom },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={() =>
+          router.canGoBack()
+            ? router.back()
+            : router.replace("/Barbeiro/(tabs)/PerfilBarbeiro")
+        }
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          marginBottom: 16,
+          paddingVertical: 8,
+        }}
+        accessibilityLabel="Voltar ao perfil"
+      >
+        <Ionicons name="chevron-back" size={22} color="#2563EB" />
+        <Text style={{ color: "#2563EB", fontSize: 16 }}>Voltar</Text>
+      </TouchableOpacity>
       <Text style={styles.titulo}>Gerenciar Barbeiros</Text>
 
       <Text style={styles.subtitulo}>
