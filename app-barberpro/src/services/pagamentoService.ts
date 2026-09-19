@@ -24,6 +24,9 @@ export interface RelatorioFinanceiroDTO {
   faturamentoMes: number;
   faturamentoAno: number;
   faturamentoTotal: number;
+
+  faturamentoEstimado: number;
+
   totalAtendimentos: number;
   ticketMedio: number;
   transacoesRecentes: TransacaoRecente[];

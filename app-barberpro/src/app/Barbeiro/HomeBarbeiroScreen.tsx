@@ -11,12 +11,6 @@ import {
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
 import { useFocusEffect } from "expo-router";
 import { StaggeredText } from "@/_components/ui/AnimatedText";
 import { colors } from "@/colors";
@@ -36,11 +30,6 @@ type StatusAgendamento =
   | "CANCELADO";
 
 export default function HomeBarbeiro() {
-  const [fontsLoaded] = useFonts({
-    Inter_700Bold,
-    Inter_600SemiBold,
-    Inter_400Regular,
-  });
 
   const { user } = useAuth();
 
@@ -71,7 +60,7 @@ export default function HomeBarbeiro() {
   // CARREGAR DADOS DA API
   // ============================================
   const carregarDados = useCallback(async () => {
-    const barbeiroId = user?.barbeiroId || user?.id;
+    const barbeiroId = user?.barbeiroId;
 
     try {
       // 1. Carrega dados da barbearia associada
@@ -222,17 +211,6 @@ export default function HomeBarbeiro() {
       minute: "2-digit",
     });
   };
-
-  if (!fontsLoaded) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: colors.background,
-        }}
-      />
-    );
-  }
 
   return (
     <View

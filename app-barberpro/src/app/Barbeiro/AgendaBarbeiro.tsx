@@ -11,12 +11,6 @@ import {
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
 import { useFocusEffect } from "expo-router";
 
 import { colors } from "@/colors";
@@ -32,11 +26,6 @@ interface DiaCarrossel {
 }
 
 export default function AgendaBarbeiro() {
-  const [fontsLoaded] = useFonts({
-    Inter_700Bold,
-    Inter_600SemiBold,
-    Inter_400Regular,
-  });
 
   const { user } = useAuth();
 
@@ -58,15 +47,18 @@ export default function AgendaBarbeiro() {
   const requisicaoAtual = useRef(0);
   const barbeiroId = user?.barbeiroId;
 
-  // Nunca usa o ID da conta de usuário como se fosse o ID do barbeiro.
   // Filtra também na renderização para não exibir dados do dia anterior.
-  const agendamentosDoDia = useMemo(
-    () => agendamentos.filter((item) =>
-      item.barbeiro_id === barbeiroId &&
-      String(item.data).slice(0, 10) === dataSelecionada
-    ),
-    [agendamentos, barbeiroId, dataSelecionada],
-  );
+  const agendamentosDoDia = useMemo(() => {
+    return agendamentos.filter((item) => {
+      const mesmoBarbeiro =
+        Number(item.barbeiro_id) === Number(barbeiroId);
+
+      const mesmaData =
+        String(item.data).slice(0, 10) === dataSelecionada;
+
+      return mesmoBarbeiro && mesmaData;
+    });
+  }, [agendamentos, barbeiroId, dataSelecionada]);
 
   const selecionarDia = (iso: string) => {
     if (iso === dataSelecionada) return;
@@ -206,9 +198,6 @@ export default function AgendaBarbeiro() {
     return hora ? hora[1] : "--:--";
   };
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
-  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

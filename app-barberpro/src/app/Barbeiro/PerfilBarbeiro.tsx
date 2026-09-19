@@ -1,12 +1,6 @@
-import {
-  Inter_400Regular,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
 import Feather from "@expo/vector-icons/Feather";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -25,11 +19,6 @@ import { useRouter } from "expo-router";
 
 
 export default function PerfilBarbeiro() {
-  const [fontsLoaded] = useFonts({
-    Inter_700Bold,
-    Inter_600SemiBold,
-    Inter_400Regular,
-  });
 
   const { user, signOut } = useAuth();
   const router = useRouter();
@@ -61,9 +50,6 @@ export default function PerfilBarbeiro() {
     carregarRating();
   }, [user?.id]);
 
-  if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
-  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>

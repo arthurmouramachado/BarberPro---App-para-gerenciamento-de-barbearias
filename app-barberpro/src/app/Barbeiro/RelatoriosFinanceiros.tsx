@@ -30,21 +30,54 @@ export default function RelatoriosFinanceiros() {
   );
 
   async function carregarRelatorio() {
-    if (!user?.id) return;
-    try {
-      const data = await pagamentoService.obterRelatorioFinanceiro(user.id);
-      setRelatorio(data);
-    } catch (error) {
-      console.error("Erro ao carregar relatório financeiro:", error);
-    } finally {
+    const barbeiroId = user?.barbeiroId;
+
+    if (!barbeiroId) {
+      console.error("ID do barbeiro não encontrado!");
+
+      setRelatorio(null);
       setLoading(false);
       setRefreshing(false);
+
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      console.log("========== RELATÓRIO FINANCEIRO ==========");
+
+      console.log("ID do usuário:", user?.id);
+
+      console.log("ID do barbeiro:", barbeiroId);
+
+      const data = await pagamentoService.obterRelatorioFinanceiro(
+        barbeiroId
+      );
+
+      console.log("Resposta do relatório:", data);
+
+      setRelatorio(data);
+
+    } catch (error: any) {
+
+      console.error(
+        "Erro ao carregar relatório financeiro:",
+        error?.response?.data || error?.message
+      );
+
+      setRelatorio(null);
+
+    } finally {
+
+      setLoading(false);
+      setRefreshing(false);
+
     }
   }
-
   useEffect(() => {
     carregarRelatorio();
-  }, [user?.id]);
+  }, [user?.barbeiroId]);
 
   function onRefresh() {
     setRefreshing(true);
