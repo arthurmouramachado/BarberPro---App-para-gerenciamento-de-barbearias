@@ -457,6 +457,24 @@ export class PagamentosService {
       orderBy: { pago_em: 'desc' },
     });
 
+    const agendamentos = await this.prisma.agendamentos.findMany({
+      where: {
+        barbeiro_id: barbeiroId,
+
+        status: {
+          in: ['CONFIRMADO', 'EM_ANDAMENTO', 'CONCLUIDO'],
+        },
+      },
+
+      include: {
+        servicos: true,
+      },
+    });
+
+    const faturamentoEstimado = agendamentos.reduce((total, agendamento) => {
+      return total + Number(agendamento.servicos?.preco || 0);
+    }, 0);
+
     let faturamentoHoje = 0;
     let faturamentoMes = 0;
     let faturamentoAno = 0;
@@ -512,6 +530,7 @@ export class PagamentosService {
       faturamentoMes,
       faturamentoAno,
       faturamentoTotal,
+      faturamentoEstimado,
       totalAtendimentos,
       ticketMedio,
       transacoesRecentes,
