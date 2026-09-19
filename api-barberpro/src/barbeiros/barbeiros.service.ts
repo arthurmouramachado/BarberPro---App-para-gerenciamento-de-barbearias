@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateBarbeiroDto } from './dto/create-barbeiro.dto';
 import { UpdateBarbeiroDto } from './dto/update-barbeiro.dto';
 import { PrismaService } from 'src/database/prisma.service';
@@ -128,9 +133,66 @@ export class BarbeirosService {
     });
   }
 
-  remove(id: number) {
-    return this.prisma.barbeiros.delete({
-      where: { id },
+  private async barbeariaDoAdministrador(
+    administradorId: number,
+  ): Promise<number> {
+    const administrador = await this.prisma.usuarios.findUnique({
+      where: { id: administradorId },
+      include: { barbeiros: true },
     });
+    if (
+      String(administrador?.funcao ?? '')
+        .trim()
+        .toUpperCase() !== 'ADMIN'
+    ) {
+      throw new ForbiddenException(
+        'Somente administradores podem gerenciar barbeiros.',
+      );
+    }
+    const barbeariaId = administrador?.barbeiros?.barbearia_id;
+    if (!barbeariaId) {
+      throw new ForbiddenException(
+        'O administrador precisa estar vinculado a uma barbearia.',
+      );
+    }
+    return barbeariaId;
+  }
+
+  async listarEquipe(administradorId: number) {
+    const barbeariaId = await this.barbeariaDoAdministrador(administradorId);
+    return this.prisma.barbeiros.findMany({
+      where: { barbearia_id: barbeariaId, usuarios: { funcao: 'BARBEIRO' } },
+      include: {
+        usuarios: {
+          select: { id: true, nome: true, email: true, funcao: true },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+  }
+
+  async remove(id: number, administradorId: number) {
+    const barbeariaId = await this.barbeariaDoAdministrador(administradorId);
+    const barbeiro = await this.findOne(id);
+    if (!barbeiro) throw new NotFoundException('Barbeiro não encontrado.');
+    if (
+      barbeiro.barbearia_id !== barbeariaId ||
+      barbeiro.usuario_id === administradorId ||
+      String(barbeiro.usuarios.funcao).trim().toUpperCase() !== 'BARBEIRO'
+    ) {
+      throw new ForbiddenException(
+        'Você só pode excluir barbeiros da sua equipe.',
+      );
+    }
+    try {
+      return await this.prisma.barbeiros.delete({ where: { id } });
+    } catch (error) {
+      if ((error as { code?: string })?.code === 'P2003') {
+        throw new ConflictException(
+          'Este barbeiro possui registros vinculados e não pode ser excluído. O histórico de atendimentos será preservado.',
+        );
+      }
+      throw error;
+    }
   }
 }

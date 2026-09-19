@@ -22,6 +22,7 @@ export class AgendamentosService {
     private notificacoesService: NotificacoesService,
     private googleCalendarService: GoogleCalendarService,
   ) {}
+
   async create(createAgendamentoDto: CreateAgendamentoDto) {
     const {
       cliente_id,
@@ -74,12 +75,17 @@ export class AgendamentosService {
         data: new Date(data),
         hora_inicio: horaInicioAgendamento,
         hora_fim: horaFimAgendamento,
-        status: String(status ?? 'PENDENTE').toUpperCase(),
+        status: String(status ?? 'PENDENTE')
+          .trim()
+          .toUpperCase(),
       },
     });
 
     await this.notificacoesService.create(cliente.usuario_id, {
-      mensagem: `Agendamento confirmado para ${data}`,
+      // eslint-disable-next-line prettier/prettier
+      mensagem: agendamento.status === 'PENDENTE'
+          ? `Agendamento para ${data} aguardando confirmação de pagamento`
+          : `Agendamento confirmado para ${data}`,
     });
 
     await this.notificacoesService.create(barbeiro.usuario_id, {
@@ -198,6 +204,7 @@ export class AgendamentosService {
       where: { id },
       data: {
         ...updateAgendamentoDto,
+        status: updateAgendamentoDto.status?.trim().toUpperCase(),
         data: updateAgendamentoDto.data
           ? new Date(updateAgendamentoDto.data)
           : undefined,
