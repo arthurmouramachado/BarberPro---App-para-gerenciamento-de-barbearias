@@ -1,15 +1,15 @@
-import { api } from './api';
-import { ServicoDTO } from './servicosService';
+import { api } from "./api";
+import { ServicoDTO } from "./servicosService";
 
 // 1. O Contrato de Interface (O formato exato do seu Card no App)
 export interface BarbeariaCardDTO {
   id: number;
-  nome: string;               // Nome vindo do banco
-  foto_url: string;           // URL da imagem
-  endereco: string;     // Ex: Endereço ou bairro
-  diaEHorario: string;        // Ex: "seg-sab das 8h às 18h30"
-  mediaAvaliacoes: number;    // A nota média de avaliações
-  distanciaKM?: number;       // Opcional, pois dependerá do GPS do usuário futuramente
+  nome: string; // Nome vindo do banco
+  foto_url: string; // URL da imagem
+  endereco: string; // Ex: Endereço ou bairro
+  diaEHorario: string; // Ex: "seg-sab das 8h às 18h30"
+  mediaAvaliacoes: number; // A nota média de avaliações
+  distanciaKM?: number; // Opcional, pois dependerá do GPS do usuário futuramente
 }
 
 // Interface opcional para o cadastro
@@ -25,9 +25,9 @@ export interface BarbeariaDetalhesDTO extends BarbeariaCardDTO {
 }
 
 export const barbeariaService = {
- async cadastrar(dados: FormData | CriarBarbeariaDTO) {
+  async cadastrar(dados: FormData | CriarBarbeariaDTO) {
     const isFormData = dados instanceof FormData;
-    const response = await api.post("/barbearias", dados, {
+    const response = await api.post("/barbearias/criar", dados, {
       headers: isFormData
         ? { "Content-Type": "multipart/form-data" }
         : { "Content-Type": "application/json" },

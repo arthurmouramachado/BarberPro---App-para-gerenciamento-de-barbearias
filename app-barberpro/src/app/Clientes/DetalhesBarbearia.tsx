@@ -1,5 +1,5 @@
 import Feather from "@expo/vector-icons/Feather";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
   Alert,
@@ -17,12 +17,15 @@ import { useAgendamento } from "@/contexts/AgendamentoContext";
 import { avaliacoesService } from "@/services/avaliacoes";
 import { barbeariaService } from "@/services/barbeariaService";
 import { servicosService } from "@/services/servicosService";
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { descricaoSemPrefixo, ehPlanoPelaDescricao } from "@/utils/planoNoFront";
-
-// ======================================================
-// TIPOS
-// ======================================================
+import {
+  formatarEnderecoBarbearia,
+  obterUrlFotoBarbearia,
+} from "@/utils/barbeariaFormatada";
+import {
+  descricaoSemPrefixo,
+  ehPlanoPelaDescricao,
+} from "@/utils/planoNoFront";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ServicoItem = {
   id: number;
@@ -44,10 +47,6 @@ export type BarbeariaDetalhes = {
   totalAvaliacoes?: number;
 };
 
-// ======================================================
-// TELA
-// ======================================================
-
 export default function DetalhesBarbearia() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -63,10 +62,6 @@ export default function DetalhesBarbearia() {
 
   // ID da barbearia: capturado via parâmetro de rota ou pelo contexto
   const idDaBarbearia = id ? Number(id) : barbeariaId || null;
-
-  // ====================================================
-  // ESTADOS
-  // ====================================================
 
   const [barbearia, setBarbearia] = useState<BarbeariaDetalhes | null>(null);
   const [servicos, setServicos] = useState<ServicoItem[]>([]);
@@ -85,11 +80,7 @@ export default function DetalhesBarbearia() {
   );
 
   const selecaoAtual = useRef({ servicoSelecionado, planoSelecionado });
-    selecaoAtual.current = { servicoSelecionado, planoSelecionado };
-
-  // ====================================================
-  // CARREGAR DADOS DA API
-  // ====================================================
+  selecaoAtual.current = { servicoSelecionado, planoSelecionado };
 
   const carregarDados = useCallback(
     async (isRefreshing = false) => {
@@ -210,8 +201,8 @@ export default function DetalhesBarbearia() {
         const listaServicos = itensAtivos.filter(
           (item) => !ehPlanoPelaDescricao(item.descricao),
         );
-        const listaPlanos = itensAtivos.filter(
-          (item) => ehPlanoPelaDescricao(item.descricao),
+        const listaPlanos = itensAtivos.filter((item) =>
+          ehPlanoPelaDescricao(item.descricao),
         );
 
         setServicos(listaServicos);
@@ -254,34 +245,34 @@ export default function DetalhesBarbearia() {
   }, [carregarDados]);
 
   const handleSelecionarServico = (id: number) => {
-      setServicoSelecionado(id);
-      setPlanoSelecionado(null);
-    };
+    setServicoSelecionado(id);
+    setPlanoSelecionado(null);
+  };
 
   const handleSelecionarPlano = (id: number) => {
-      setPlanoSelecionado(id);
-      setServicoSelecionado(null);
-    };
+    setPlanoSelecionado(id);
+    setServicoSelecionado(null);
+  };
 
   const handleProsseguir = () => {
-      if (loading || refreshing) return;
+    if (loading || refreshing) return;
 
-      const plano = planos.find((item) => item.id === planoSelecionado);
-      const servico = servicos.find((item) => item.id === servicoSelecionado);
-      if (!idDaBarbearia || (!plano && !servico)) {
-        Alert.alert("Atenção", "Selecione um serviço ou plano para continuar.");
-        return;
-      }
+    const plano = planos.find((item) => item.id === planoSelecionado);
+    const servico = servicos.find((item) => item.id === servicoSelecionado);
+    if (!idDaBarbearia || (!plano && !servico)) {
+      Alert.alert("Atenção", "Selecione um serviço ou plano para continuar.");
+      return;
+    }
 
-      // Primeiro define a barbearia; depois restaura a seleção no contexto.
-      // selecionarBarbearia limpa as escolhas anteriores por projeto.
-      selecionarBarbearia(idDaBarbearia);
-      if (plano) {
-        selecionarPlano(plano.id);
-      } else if (servico) {
-        selecionarServico(servico.id);
-      }
-      router.push("/Clientes/AgendarServico");
+    // Primeiro define a barbearia; depois restaura a seleção no contexto.
+    // selecionarBarbearia limpa as escolhas anteriores por projeto.
+    selecionarBarbearia(idDaBarbearia);
+    if (plano) {
+      selecionarPlano(plano.id);
+    } else if (servico) {
+      selecionarServico(servico.id);
+    }
+    router.push("/Clientes/AgendarServico");
   };
 
   // ====================================================
@@ -327,10 +318,7 @@ export default function DetalhesBarbearia() {
     );
   }
 
-  const fotoUri =
-    barbearia.foto_url && barbearia.foto_url.startsWith("http")
-      ? barbearia.foto_url
-      : null;
+  const fotoUri = obterUrlFotoBarbearia(barbearia.foto_url);
 
   return (
     <View style={styles.container}>
@@ -354,14 +342,22 @@ export default function DetalhesBarbearia() {
           />
         }
       >
-        {/* ==================================================
-            BANNER
-        ================================================== */}
         {fotoUri ? (
-          <Image source={{ uri: fotoUri }} style={styles.bannerImagem} />
+          <Image
+            source={{ uri: fotoUri }}
+            style={styles.bannerImagem}
+            onError={(event) => {
+              console.error(
+                "Erro na imagem dos detalhes:",
+                fotoUri,
+                event.nativeEvent.error,
+              );
+            }}
+          />
         ) : (
           <View style={[styles.bannerImagem, styles.bannerPlaceholder]}>
             <Feather name="scissors" size={40} color="#CBD5E1" />
+
             <Text style={styles.bannerPlaceholderTexto}>{barbearia.nome}</Text>
           </View>
         )}
@@ -394,11 +390,13 @@ export default function DetalhesBarbearia() {
             </View>
           )}
 
-          {/* ENDEREÇO E HORÁRIO */}
           {barbearia.endereco ? (
             <View style={styles.infoRow}>
               <Feather name="map-pin" size={15} color="#64748B" />
-              <Text style={styles.infoTexto}>{barbearia.endereco}</Text>
+
+              <Text style={styles.infoTexto}>
+                {formatarEnderecoBarbearia(barbearia.endereco)}
+              </Text>
             </View>
           ) : null}
 
@@ -454,7 +452,7 @@ export default function DetalhesBarbearia() {
                       <Text style={styles.duracaoServico}>{duracao} min</Text>
                     ) : null}
 
-                    {descricaoSemPrefixo(servico.descricao)? (
+                    {descricaoSemPrefixo(servico.descricao) ? (
                       <Text style={styles.descricaoServico}>
                         {descricaoSemPrefixo(servico.descricao)}
                       </Text>
@@ -546,7 +544,9 @@ export default function DetalhesBarbearia() {
           <View style={styles.containerBotao}>
             <Button
               label="Prosseguir"
-              isActive={!refreshing && (!!servicoSelecionado || !!planoSelecionado)}
+              isActive={
+                !refreshing && (!!servicoSelecionado || !!planoSelecionado)
+              }
               onPress={handleProsseguir}
             />
           </View>

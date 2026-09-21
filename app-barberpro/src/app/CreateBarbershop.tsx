@@ -7,7 +7,10 @@ import Octicons from "@expo/vector-icons/Octicons";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import {
+  useRouter,
+  useLocalSearchParams,
+} from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -23,9 +26,25 @@ import {
 } from "react-native";
 import { Button } from "../_components/Button";
 import { Input } from "../_components/Input";
+import { userService } from "@/services/userService";
+import { barbeiroService } from "@/services/barbeiroService";
 
 export default function CreateBarbershop() {
   const router = useRouter();
+
+  const {
+    nome,
+    email,
+    telefone: telefoneUsuario,
+    senha,
+    data_nascimento,
+  } = useLocalSearchParams<{
+    nome?: string;
+    email?: string;
+    telefone?: string;
+    senha?: string;
+    data_nascimento?: string;
+  }>();
 
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -77,43 +96,280 @@ export default function CreateBarbershop() {
     estado.trim() !== "";
 
   const handleCadastro = async () => {
+
     if (!isFormValid || loading) return;
 
+    const emailFormatado = String(email || "")
+      .trim()
+      .toLowerCase();
+
+    const nomeFormatado = String(nome || "").trim();
+
+    const senhaFormatada = String(senha || "");
+
+    if (
+      !emailFormatado ||
+      !nomeFormatado ||
+      !senhaFormatada
+    ) {
+
+      Alert.alert(
+        "Erro",
+        "Os dados do administrador não foram encontrados. Reinicie o cadastro."
+      );
+
+      return;
+
+    }
+
+    let usuarioCriado = false;
+
+    let barbeariaCriada = false;
+
     try {
+
       setLoading(true);
 
-      const formData = new FormData();
-      formData.append("nome", nomeBarbearia);
-      formData.append("telefone", telefone);
 
-      const enderecoCompleto = `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
-      formData.append("endereco", enderecoCompleto);
+      // ============================================
+      // 1. CADASTRAR O ADMINISTRADOR
+      // ============================================
 
-      if (image) {
-        const uriParts = image.split(".");
-        const fileType = uriParts[uriParts.length - 1];
+      const novoUsuario = await userService.criarUser({
 
-        formData.append("foto", {
-          uri: image,
-          name: `barbearia_${Date.now()}.${fileType}`,
-          type: `image/${fileType}`,
-        } as any);
+        nome: nomeFormatado,
+
+        email: emailFormatado,
+
+        telefone: String(telefoneUsuario || "").trim(),
+
+        senha: senhaFormatada,
+
+        data_nascimento:
+          String(data_nascimento || ""),
+
+        funcao: "ADMIN",
+
+      });
+
+      usuarioCriado = true;
+
+      console.log(
+        "Administrador criado. ID:",
+        novoUsuario?.id
+      );
+
+
+      // ============================================
+      // 2. OBTER O ID DO BARBEIRO/ADMIN
+      // ============================================
+
+      const barbeiroId =
+        novoUsuario?.barbeiros?.id;
+
+      if (!barbeiroId) {
+
+        throw new Error(
+          "O administrador foi criado, mas o perfil de barbeiro não foi encontrado."
+        );
+
       }
 
-      await barbeariaService.cadastrar(formData as any);
 
-      Alert.alert("Sucesso", "Barbearia cadastrada com sucesso!", [
-        { text: "OK", onPress: () => router.replace("/LoginScreen") },
-      ]);
+      // ============================================
+      // 3. PREPARAR DADOS DA BARBEARIA
+      // ============================================
+
+      const formData = new FormData();
+
+      formData.append(
+        "nome",
+        nomeBarbearia.trim()
+      );
+
+      formData.append(
+        "telefone",
+        telefone.trim()
+      );
+
+
+      const enderecoCompleto =
+        `${endereco}, nº ${numero} - ${cidade}/${estado} (CEP: ${cep})`;
+
+      formData.append(
+        "endereco",
+        enderecoCompleto
+      );
+
+
+      // ============================================
+      // 4. ADICIONAR FOTO
+      // ============================================
+
+      if (image) {
+
+        const uriParts = image.split(".");
+
+        const fileType =
+          uriParts[uriParts.length - 1]
+            .toLowerCase()
+            .split("?")[0];
+
+        formData.append(
+          "foto",
+          {
+            uri: image,
+
+            name:
+              `barbearia_${Date.now()}.${fileType}`,
+
+            type: `image/${fileType}`,
+
+          } as any
+        );
+
+      }
+
+
+      // ============================================
+      // 5. CADASTRAR A BARBEARIA
+      // ============================================
+
+      const novaBarbearia =
+        await barbeariaService.cadastrar(
+          formData as any
+        );
+
+      barbeariaCriada = true;
+
+
+      console.log(
+        "Barbearia criada. ID:",
+        novaBarbearia?.id
+      );
+
+
+      if (!novaBarbearia?.id) {
+
+        throw new Error(
+          "A API não retornou o ID da barbearia."
+        );
+
+      }
+
+
+      // ============================================
+      // 6. VINCULAR ADMINISTRADOR À BARBEARIA
+      // ============================================
+
+      await barbeiroService.atualizar(
+        String(barbeiroId),
+        {
+
+          barbearia_id:
+            Number(novaBarbearia.id),
+
+        }
+      );
+
+
+      // ============================================
+      // 7. CADASTRO FINALIZADO
+      // ============================================
+
+      Alert.alert(
+
+        "Cadastro realizado!",
+
+        "Sua conta de administrador e sua barbearia foram cadastradas com sucesso!",
+
+        [
+
+          {
+
+            text: "Ir para Login",
+
+            onPress: () => {
+
+              router.replace({
+
+                pathname: "/LoginScreen",
+
+                params: {
+
+                  emailCadastrado:
+                    emailFormatado,
+
+                },
+
+              });
+
+            },
+
+          },
+
+        ]
+
+      );
+
+
     } catch (error: any) {
-      console.error("Erro no cadastro:", error);
-      const mensagemErro =
-        error.response?.data?.message ||
-        "Não foi possível conectar ao servidor.";
-      Alert.alert("Erro", mensagemErro);
+
+      console.error(
+
+        "Erro ao cadastrar administrador:",
+
+        error?.response?.data ||
+        error?.message
+
+      );
+
+
+      let mensagem =
+
+        error?.response?.data?.message ||
+
+        error?.message ||
+
+        "Não foi possível realizar o cadastro.";
+
+
+      if (
+        usuarioCriado &&
+        !barbeariaCriada
+      ) {
+
+        mensagem =
+          "Sua conta de administrador foi criada, mas houve um problema ao cadastrar a barbearia. Não repita o cadastro completo, pois sua conta já existe.";
+
+      } else if (
+        usuarioCriado &&
+        barbeariaCriada
+      ) {
+
+        mensagem =
+          "Sua conta e barbearia foram criadas, mas houve um problema ao vinculá-las. Não refaça o cadastro completo.";
+
+      }
+
+
+      Alert.alert(
+
+        "Erro no Cadastro",
+
+        Array.isArray(mensagem)
+          ? mensagem.join("\n")
+          : mensagem
+
+      );
+
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   const pickImage = async () => {
