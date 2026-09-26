@@ -13,11 +13,11 @@ const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 async function migratePasswords() {
-  console.log('🔄 Iniciando migração de senhas...\n');
+  console.log(' Iniciando migração de senhas...\n');
 
   const users = await prisma.usuarios.findMany();
 
-  console.log(`📊 Encontrados ${users.length} usuários\n`);
+  console.log(` Encontrados ${users.length} usuários\n`);
 
   let countMigrated = 0;
   let countSkipped = 0;
@@ -25,7 +25,7 @@ async function migratePasswords() {
   for (const user of users) {
     if (!user.senha || user.senha.startsWith('$2b$')) {
       console.log(
-        `⏭️  ${user.email}: ja esta criptografada ou vazia, pulando...`,
+        `  ${user.email}: ja esta criptografada ou vazia, pulando...`,
       );
       countSkipped++;
       continue;
@@ -38,23 +38,23 @@ async function migratePasswords() {
       data: { senha: hashedPassword },
     });
 
-    console.log(`✅ ${user.email}: senha criptografada com sucesso!`);
+    console.log(` ${user.email}: senha criptografada com sucesso!`);
     countMigrated++;
   }
 
   console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('📋 RESUMO DA MIGRAÇÃO:');
-  console.log(`   ✅ Migradas: ${countMigrated} senhas`);
-  console.log(`   ⏭️  Puladas (já criptografadas): ${countSkipped}`);
-  console.log(`   📊 Total: ${users.length} usuários`);
+  console.log(' RESUMO DA MIGRAÇÃO:');
+  console.log(`    Migradas: ${countMigrated} senhas`);
+  console.log(`    Puladas (já criptografadas): ${countSkipped}`);
+  console.log(`   Total: ${users.length} usuários`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
-  console.log('🎉 Migração concluída com sucesso!');
+  console.log(' Migração concluída com sucesso!');
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   await pool.end();
 }
 
 migratePasswords().catch((e) => {
-  console.error('❌ Erro na migração:', e);
+  console.error(' Erro na migração:', e);
   process.exit(1);
 });

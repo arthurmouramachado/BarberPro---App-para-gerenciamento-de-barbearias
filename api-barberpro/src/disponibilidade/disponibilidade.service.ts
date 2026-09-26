@@ -25,8 +25,8 @@ export class DisponibilidadeService {
     return await this.prisma.disponibilidade.create({
       data: {
         dia_da_semana,
-        hora_inicio: new Date(`1970-01-01T${hora_inicio}Z`), // Convertendo para Date
-        hora_fim: new Date(`1970-01-01T${hora_fim}Z`), // Convertendo para Date
+        hora_inicio: new Date(`1970-01-01T${hora_inicio}Z`), // Convertendo para Data
+        hora_fim: new Date(`1970-01-01T${hora_fim}Z`), // Convertendo para Data
         barbeiro_id: barbeiro.id,
       },
     });

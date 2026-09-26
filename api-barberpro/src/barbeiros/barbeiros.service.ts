@@ -90,7 +90,7 @@ export class BarbeirosService {
       const minutos = String(horarioAtual.getUTCMinutes()).padStart(2, '0');
       const slotFormatado = `${horas}:${minutos}`;
 
-      // 4. CHECAGEM DE INTERSEÇÃO: O pulo do gato do TCC 🐈‍⬛
+      // 4. CHECAGEM DE INTERSEÇÃO
       const houveColisao = agendamentosOcupados.some((agendamento) => {
         const inicioAgendado = agendamento.hora_inicio.getTime();
         const fimAgendado = agendamento.hora_fim.getTime();
